@@ -47,24 +47,50 @@ javap -cp ~/.gradle/caches/fabric-loom/minecraftMaven/net/minecraft/minecraft-me
 
 - `jeff.cherrypicking.CherryPicking` - mod id, logger, `id()`. No entrypoint.
 - `client.CherryPickingClient` - the single `client` entrypoint; registers everything.
+- `client.config` - the settings registry and the config screen.
+- `client.command` - the `/cherry` command, which opens the screen.
 
 Keep registration in that one class, so there is one place that says what the mod switches on.
 
 ## Rule: every tunable goes in the settings registry
 
-This mod has no settings registry yet. When the first player-facing tunable arrives, copy the shape
-used in `../coalroutegenerator-26.2/src/main/java/jeff/coalroutegenerator/client/config` -
-`Setting`, `Section`, `Control`, `Settings`, `ConfigFile`, `ConfigScreen` - where the screen is a
-projection of the registry and no setting has per-setting screen code. **Any new value a player
-might want to change goes in that registry in the same change that introduces it.** Defaults are not
-written in the registry; each setting takes its owner's field value at registration time, so Reset
-restores what the code actually ships.
+**Any new value a player might want to change must be added to `client.config.Settings`, in the same
+change that introduces it.** That list is the config screen and the saved file: `ConfigScreen` builds
+the tabs, groups and widgets from it, and `ConfigFile` saves and loads it by key under
+`config/cherrypicking.json`. Neither knows what any individual setting is, so registering one is the
+whole job - and *not* registering one leaves a value that can only be changed by recompiling.
+
+Each entry needs a **stable key** (renaming one silently discards what players had saved), a
+**label** a player would recognise, a **description of one plain sentence** in the words a player
+would use, and a **`Section`**, which decides the tab and group it lands in.
+
+Defaults are not written in the registry. Each setting takes its owner's field value at registration
+time, so the default lives at the field it belongs to and Reset restores what the code actually
+ships.
+
+`client.config.Placeholder` and the one `general.placeholder` setting exist only to prove the screen
+draws and the file round-trips. **Delete both in the change that registers the first real setting.**
+`Settings` also carries unused `whole`, `real` and `choice` helpers, and `Control` carries all four
+widget kinds, so that first slider or dropdown is one registry line and no screen code.
+
+Do not add a `/cherry` subcommand that only sets a value. Commands do things; settings are the
+screen's job.
 
 ## The config hub
 
-Once this mod has a config screen, it joins the shared hub that skyblock-flipper draws, so one key
-opens the settings of every mod in this family. The whole cost of joining is a
-`client.config.HubEntry` class plus a `jeffhub` entrypoint line in `fabric.mod.json` - it imports
-nothing from the other mods and must keep working with them absent. The contract, and the rules for
-changing it, are in `../skyblock-flipper-26.2/docs/config-hub.md`. If joining ever costs more than
-that, the contract has drifted; say so rather than working around it.
+The settings screen is also reachable from the shared hub screen that skyblock-flipper draws, so one
+key opens the settings of every mod in this family. This mod's whole part in that is
+`client.config.HubEntry` plus the `jeffhub` entrypoint in `fabric.mod.json` - it imports nothing from
+the other mods and must keep working with them absent, so it names no YACL or ModMenu type. The
+contract, and the rules for changing it, are in `../skyblock-flipper-26.2/docs/config-hub.md`. If
+joining ever costs more than a class and a JSON line, the contract has drifted; say so rather than
+working around it.
+
+`HubEntry` never returns `null`, because YACL is a hard `depends` here and the screen therefore
+cannot fail to open.
+
+## Commands
+
+`/cherry` opens the config screen; `/cherry config` does the same. ModMenu's Settings button is the
+third way in, and the hub is the fourth. Every one of them is an addition: the mod installed alone,
+with no hub and no ModMenu, is still fully usable.
