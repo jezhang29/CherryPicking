@@ -4,11 +4,11 @@ plugins {
 }
 
 repositories {
-	// Add repositories to retrieve artifacts from in here.
-	// You should only use this when depending on other mods because
-	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// for more information about repositories.
+	// YetAnotherConfigLib, which draws the config screen.
+	maven { url = "https://maven.isxander.dev/releases" }
+	// ModMenu, which is only needed to compile the entrypoint that puts the
+	// screen behind its Settings button.
+	maven { url = "https://maven.terraformersmc.com/releases" }
 }
 
 fabricApi {
@@ -24,6 +24,15 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	// The config screen. A hard dependency, matching the coal route mod: the
+	// screen is this mod's own door and the hub's, so it must never fail to open.
+	implementation "dev.isxander:yet-another-config-lib:${project.yacl_version}"
+
+	// ModMenu is compile-only on purpose. It is one entrypoint class, and Fabric
+	// never loads an entrypoint whose owning mod is absent, so the mod runs fine
+	// without ModMenu installed - you just reach the screen with /cherry.
+	compileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
 }
 
 processResources {
