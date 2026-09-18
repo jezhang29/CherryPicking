@@ -1,26 +1,24 @@
 # CherryPicking
 
-A client-only Fabric mod for Minecraft 26.2 with general quality-of-life additions for Hypixel
-Skyblock.
-
-It is display-only: it shows and suggests, and never moves, clicks, or mines for you.
+A client-side Fabric mod for Minecraft 26.2 that adds quality-of-life features to Hypixel Skyblock.
 
 ## Settings
 
-`/cherry` opens the settings screen. It is also behind ModMenu's Settings button, and in the shared
-config hub that the skyblock-flipper mod draws, which lists every mod in this family on one screen.
-None of those are required: the mod installed on its own is fully usable through `/cherry`.
+`/cherry` opens the settings screen. ModMenu's Settings button and the shared config hub from
+skyblock-flipper open the same screen. Neither is required.
 
 Settings are saved to `config/cherrypicking.json`.
 
 ## Building
 
+Requires JDK 25.
+
 ```bash
 ./gradlew build
 ```
 
-The build installs the jar straight into `~/Library/Application Support/minecraft/mods/`.
+The build also copies the jar into `~/Library/Application Support/minecraft/mods/`.
 
 ## License
 
-LGPL-3.0-only.
+[LGPL-3.0](LICENSE).
