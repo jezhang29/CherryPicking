@@ -4,6 +4,9 @@ plugins {
 }
 
 repositories {
+	// For test-only dependencies. Loom supplies the Minecraft and Fabric repositories itself.
+	mavenCentral()
+
 	// ModMenu, which is only needed to compile the entrypoint that puts the
 	// screen behind its Settings button.
 	maven { url = "https://maven.terraformersmc.com/releases" }
@@ -27,6 +30,15 @@ dependencies {
 	// never loads an entrypoint whose owning mod is absent, so the mod runs fine
 	// without ModMenu installed - you just reach the screen with /cherry.
 	compileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+
+	// Tests run plain JUnit against code that needs no running game.
+	testImplementation platform("org.junit:junit-bom:5.11.4")
+	testImplementation "org.junit.jupiter:junit-jupiter"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+test {
+	useJUnitPlatform()
 }
 
 processResources {
@@ -103,6 +115,9 @@ tasks.register("installMod", Copy) {
 		}
 		present
 	}
+
+	// A jar whose tests fail never reaches the game, however the task is started.
+	dependsOn(tasks.named("check"))
 
 	from(tasks.named("jar"))
 	into(modsDir)
