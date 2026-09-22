@@ -610,3 +610,23 @@ S5-01 and S6-01–05. Record the build/modpack used in Notes when testing.
 - **Code:** `client/dungeon/mob/StarMobWatch.java:117`, `client/dungeon/mob/StarMobRenderer.java:72`
 - **Verdict:** OPEN
 - **Notes:**
+
+## M1: reliable saved settings (2026-09-22)
+
+The config file now saves through a temporary file, and loading checks each value's type and
+range. Unit tests cover the logic; this check covers the real config folder.
+
+### M1-01: Settings save and come back on your own disk
+- **Setup:** Close the game. Open `~/Library/Application Support/minecraft/config/`.
+- **Do:**
+  1. Start the game. Open `/cherry`.
+  2. Change `Lines` in `Blaze` to 3, and turn off `Line to the next blaze`.
+  3. Press Done. Look in the config folder.
+  4. Quit the game and start it again. Open `/cherry`.
+  5. Put both settings back the way you had them, and press Done.
+- **Expect:** After step 3 the folder has `cherrypicking.json` and no `cherrypicking.json.tmp`.
+  After step 4 both changes are still there.
+- **Look for:** No `Could not write the config to` and no `Saved value for` in the log.
+- **Code:** `client/config/ConfigFile.java:132`, `client/config/ConfigFile.java:182`
+- **Verdict:** OPEN
+- **Notes:**

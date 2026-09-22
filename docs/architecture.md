@@ -58,9 +58,9 @@ the same tick. Registration is explicit; there is no discovery framework for fea
 | --- | --- |
 | `client.config.Settings` | Ordered registry of 44 settings and two reset actions at the audit. Captures owner-field defaults during class initialization. `all()` includes actions; `settings()` excludes them. |
 | `Setting<T>` | Stable key, label, description, section, typed control, captured default and live getter/setter. Does not own a second value or validate it. |
-| `Control<T>` | Sealed flag, whole number, real number, enum choice and colour descriptions. Widget switches are exhaustive. Numeric limits currently constrain widgets; owner setters are responsible for other entry paths. |
+| `Control<T>` | Sealed flag, whole number, real number, enum choice and colour descriptions. Widget switches are exhaustive. Numeric limits constrain the widgets, and `ConfigFile` clamps loaded numbers to them. Owner setters do not clamp. |
 | `Entry`, `Action`, `Section` | Settings/actions share screen metadata; nested dependencies disable rows; enum declaration order controls tabs/groups. Actions have no persisted value. |
-| `ConfigFile` | Fabric config-directory adapter plus JSON decoding, migration, encoding and direct file writes. A malformed document logs and leaves defaults; individual conversion failures leave that setting unchanged. |
+| `ConfigFile` | Fabric config-directory adapter plus JSON decoding, migration, encoding and atomic file replacement. A malformed document logs and leaves defaults; a value of the wrong JSON type, or a non-finite number, leaves that setting unchanged. Package-private `load(Path)`/`save(Path)` exist for `ConfigFileTest`. |
 | `ConfigScreen.build(parent)` | Common factory used by commands, ModMenu and the hub. Returns the mod's own `SettingsScreen`, with no YACL dependency. |
 | `ScreenOpener` | Defers `/cherry` and `/cherry config` until chat has closed and no screen is open. |
 | `client.screen` | Registry-driven rail, card grid, search, widgets, dropdowns, colour picker, scrolling, tooltips and reset controls. Helpers are mostly package-private; `ScreenSettings` exposes appearance preferences. |
@@ -83,13 +83,18 @@ Persistence contracts:
   alpha/fill suffixes. Named colours follow the theme; literal colours retain their RGB.
 - Legacy `boxes.fillOpacity` is applied to saved box-colour values without an explicit `/xx`:
   `fill = round(outlineAlpha * clamp(legacyShare, 0, 1))`. It is omitted on the next save.
-  This migration currently does not visit absent colour keys or `beams.fillAlpha`.
+  When the file has no `beams.fillAlpha`, that setting becomes `beams.alpha * legacyShare`, the
+  lanterns' old fill. Absent colour keys are not migrated: every old save wrote every key its
+  version had, so an absent key is a setting that version did not have.
 - Removed `general.placeholder`, `livid.hud.*` and `mobs.opacity` are not current settings;
   existing docs explicitly describe dropping retired values. Do not restore retired features
   as a side effect of modernization.
 
-The current file writer is not atomic. Invalid numeric data is not consistently rejected or
-bounded across all entry paths. These are planned repairs, not properties to depend on.
+Loading checks each value: it must have its control's JSON type (`"yes"` is not a flag), numbers
+must be finite, and whole and real numbers are clamped to the control's limits. Saving writes
+`cherrypicking.json.tmp` beside the file and moves it over the file atomically; a failed save logs
+`Could not write the config to` and leaves the previous file byte-identical. `ConfigFileTest`
+covers all of these.
 
 ## Themes and resources
 
