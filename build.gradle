@@ -87,8 +87,8 @@ publishing {
  * jar is in place without a second command.
  *
  * <p>It is a no-op when the mods folder does not exist, which is what keeps it off CI and off any
- * machine that is not the user's Mac. The destination name is fixed rather than versioned, so a
- * version bump cannot leave two copies of the mod loading at once.
+ * machine that is not the user's Mac. The destination name carries the version, so a version bump
+ * leaves the old jar in the folder beside the new one until it is deleted by hand.
  */
 tasks.register("installMod", Copy) {
 	description = "Copies the built mod jar into the Minecraft mods folder"

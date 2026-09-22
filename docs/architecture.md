@@ -11,8 +11,8 @@ provides a custom settings screen. It does not automate movement, attacks, inter
 chat. Features announce locally through `client.dungeon.Chat`; it does not send `/locraw`.
 
 - [CLAUDE.md](../CLAUDE.md) contains development instructions, including display-only behavior,
-  stable settings keys, optional integrations and real-client testing. Its YACL, placeholder and
-  package descriptions lag the implementation; see the plan before relying on those passages.
+  code-quality and verification rules, stable settings keys, optional integrations and real-client
+  testing. `AGENTS.md` is a symlink to it, so Codex reads the same file.
 - [dungeon-layer.md](dungeon-layer.md) preserves detailed design rationale and upstream research.
   Its original feature list and stages mix implemented and future work. It is not a release list.
 - [in-game-checks.md](in-game-checks.md) owns player verdicts. Historical checks remain intact even
@@ -198,8 +198,8 @@ ModMenu 20.0.1. Metadata declares Minecraft `~26.2`, Java `>=25`, Loader `>=0.19
 `*`; successful compilation against pinned versions does not certify every permitted combination.
 
 `jar` is the shipped artifact. `build` is finalized by `installMod`, which copies into the user's
-macOS Minecraft mods directory when present. Despite its comment, the destination includes the
-version: `cherrypicking-1.0.0.jar` today. A later version can leave an older jar installed.
+macOS Minecraft mods directory when present. The destination includes the version
+(`cherrypicking-1.0.0.jar` today), so a later version can leave an older jar installed.
 CI runs `build` on Ubuntu/JDK 25 and uploads `build/libs`; the Mac-specific destination normally
 does not exist there. There is no test source tree or configured test library at this baseline.
 

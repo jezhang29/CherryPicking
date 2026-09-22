@@ -186,9 +186,9 @@ Practical checks to add with the relevant milestones:
 
 ## Proposed persistent instructions
 
-Proposal for a short root instruction file, or a surgical reconciliation of `CLAUDE.md` after
-review. **Not installed by this audit**; this avoids silently changing the existing working-tree
-instructions or creating competing rule files. Detailed rationale belongs in these docs.
+**Installed 2026-09-22** as a reconciliation of `CLAUDE.md`, not as a second rule file:
+`AGENTS.md` is a symlink to `CLAUDE.md`, so Codex and Claude Code read one source. `CLAUDE.md`
+now also carries the code-quality rules. The original proposal is kept below for its rationale.
 
 > Read `docs/architecture.md`, `docs/modernization-plan.md` and applicable in-game checks first.
 > Preserve unrelated working-tree changes and the task's authorization boundary.
@@ -220,6 +220,7 @@ intent, contract changes, behavioral test quality and player verdicts also requi
 | 2026-09-22 | Retain registry, native screen, puzzle lifecycle, mark pipeline and optional adapters. | Existing explicit extension points already support current features. No evidence warrants a project rewrite or shared framework. |
 | 2026-09-22 | Preserve old designs/verdicts; document current-vs-future and superseded checks here. | New checks MOD-01 through MOD-09 appended OPEN. Existing 32 checks unchanged. |
 | 2026-09-22 | Recommend M1 first; implementation remains unauthorized in this task. | Config writes and decoding affect every feature and can be tested without Hypixel. M2 is the next cross-feature correctness priority. |
+| 2026-09-22 | Baseline committed (`5b4dee1`). `CLAUDE.md` reconciled: stale YACL/placeholder/fixed-name text removed, code-quality and verification rules added, `AGENTS.md` symlinked to it. `installMod` comment corrected. | Docs and one build-script comment only; `./gradlew build -x installMod` passes. E12's `CLAUDE.md` part is done; README and old dungeon design remain. The versioned jar name itself is still M3. |
 
 **Concrete next task, when implementation is requested:** start M1 by adding current and legacy
 config fixtures and the smallest testable codec/path seam around `ConfigFile`, keeping its public
