@@ -4,6 +4,7 @@ import jeff.cherrypicking.CherryPicking;
 import jeff.cherrypicking.client.command.CherryCommand;
 import jeff.cherrypicking.client.config.ConfigFile;
 import jeff.cherrypicking.client.config.ScreenOpener;
+import jeff.cherrypicking.client.dungeon.Dungeons;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -26,6 +27,8 @@ public class CherryPickingClient implements ClientModInitializer {
 		// the request is parked and picked up on a later tick.
 		ClientTickEvents.END_CLIENT_TICK.register(ScreenOpener::tick);
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, context) -> CherryCommand.register(dispatcher));
+
+		Dungeons.register();
 
 		CherryPicking.LOGGER.info("{} loaded", CherryPicking.MOD_ID);
 	}

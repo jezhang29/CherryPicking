@@ -23,6 +23,10 @@ testing in terms of it. `run/` is leftover scaffolding. The mod is tested by lau
 client and joining Hypixel, which is the user's job. Live state lives under
 `~/Library/Application Support/minecraft/`, not under `run/`.
 
+**In-game checks live in `docs/in-game-checks.md`.** Read it before every review: a `FAIL` or
+`PARTLY` verdict there is a confirmed bug. Add the review's in-game checks to it, in the format and
+by the rules at the top of that file. Never edit the player's verdicts or notes.
+
 ## Hard constraint: display-only
 
 The mod may show, highlight, and suggest. **It must never move the player, click, mine, or
@@ -88,6 +92,12 @@ working around it.
 
 `HubEntry` never returns `null`, because YACL is a hard `depends` here and the screen therefore
 cannot fail to open.
+
+## Location comes from coalroutegenerator
+
+This mod never sends `/locraw`. `client.dungeon.SharedLocraw` reads coalroutegenerator's reply from
+Fabric Loader's object share (`coalroutegenerator:locraw`), with no import. Without that mod the
+sidebar alone decides. The contract is in `../coalroutegenerator-26.2/CLAUDE.md`.
 
 ## Commands
 

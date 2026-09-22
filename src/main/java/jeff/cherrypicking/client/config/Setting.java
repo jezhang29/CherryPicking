@@ -21,6 +21,8 @@ import java.util.function.Supplier;
  * @param fallback the value Reset restores
  * @param read     reads the live value from whatever owns it
  * @param write    pushes a new value into whatever owns it
+ * @param dependency true while the feature this belongs to is on; see
+ *                 {@link Entry#available()}
  */
 public record Setting<T>(
 		String key,
@@ -30,7 +32,13 @@ public record Setting<T>(
 		Control<T> control,
 		T fallback,
 		Supplier<T> read,
-		Consumer<T> write) {
+		Consumer<T> write,
+		Supplier<Boolean> dependency) implements Entry {
+
+	@Override
+	public boolean available() {
+		return dependency.get();
+	}
 
 	/** The value in force right now. */
 	public T value() {
