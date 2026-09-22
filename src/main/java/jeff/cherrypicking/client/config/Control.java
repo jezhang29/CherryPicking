@@ -1,6 +1,9 @@
 package jeff.cherrypicking.client.config;
 
+import java.util.List;
 import java.util.function.Function;
+
+import jeff.cherrypicking.client.theme.Swatch;
 
 /**
  * What kind of widget a {@link Setting} is edited with, and the limits that
@@ -10,9 +13,12 @@ import java.util.function.Function;
  * that the screen cannot draw is a compile error rather than a setting that
  * silently goes missing.
  *
- * <p>All four kinds are here from the start even though the mod only uses one
- * so far. They cost nothing while unused, and they are what lets the first
- * slider or dropdown arrive as a line in {@link Settings} and no screen code.
+ * <p>Every kind is here even while the mod uses only some of them. They cost
+ * nothing while unused, and they are what lets the first slider or colour
+ * arrive as a line in {@link Settings} and no screen code.
+ *
+ * <p>Only value kinds belong here. A button has no value, so it is an
+ * {@link Action} rather than a {@code Control}.
  */
 public sealed interface Control<T> {
 	/** An on/off switch. */
@@ -36,8 +42,28 @@ public sealed interface Control<T> {
 	record Real(double min, double max, double step, Format format) implements Control<Double> {
 	}
 
-	/** A cycle through the constants of an enum. */
-	record Choice<E extends Enum<E>>(Class<E> type, Function<E, String> label) implements Control<E> {
+	/**
+	 * One of the constants of an enum, picked from a dropdown.
+	 *
+	 * @param preview a few ARGB colours drawn beside each option in the dropdown, or none; this is
+	 *                how a theme shows what it looks like before it is picked
+	 */
+	record Choice<E extends Enum<E>>(Class<E> type, Function<E, String> label,
+			Function<E, List<Integer>> preview) implements Control<E> {
+		public Choice(Class<E> type, Function<E, String> label) {
+			this(type, label, constant -> List.of());
+		}
+	}
+
+	/**
+	 * A colour, picked from the live flavour's palette, dragged from the shade square, or typed as
+	 * hex. Its popover carries the colour's own opacity slider, so a feature never needs a separate
+	 * opacity setting beside it.
+	 *
+	 * @param fill true for a box colour: the popover then has a second slider, for how solid the
+	 *             box's inside is, apart from its outline
+	 */
+	record Colour(boolean fill) implements Control<Swatch> {
 	}
 
 	/** How a {@link Real} value is written out next to its slider. */

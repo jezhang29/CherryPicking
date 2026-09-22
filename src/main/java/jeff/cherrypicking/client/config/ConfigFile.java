@@ -14,6 +14,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import jeff.cherrypicking.CherryPicking;
+import jeff.cherrypicking.client.theme.Swatch;
 
 import net.fabricmc.loader.api.FabricLoader;
 
@@ -23,7 +24,12 @@ import net.fabricmc.loader.api.FabricLoader;
  * <p>Flat, keyed by {@link Setting#key()}. That means a setting can be added,
  * removed or reordered without touching this class, and an old file loads into
  * a newer mod: keys it does not recognise are ignored, and settings the file
- * does not mention keep their default.
+ * does not mention keep their default. Only {@link Settings#settings()} is
+ * written; an {@link Action} has no value and never appears.
+ *
+ * <p>A colour is written as a string: {@code "green"} for a palette name, which
+ * follows the flavour, or {@code "#aarrggbb"} for a literal, which does not. A
+ * box colour may end in {@code "/59"}, its own fill opacity.
  *
  * <p>The file is this mod's own, under its own name. It is not shared with the
  * other mods in the family, so their release cycles cannot put saved player
@@ -35,6 +41,13 @@ import net.fabricmc.loader.api.FabricLoader;
  */
 public final class ConfigFile {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
+	/**
+	 * The one fill share every box used before each colour had a fill of its own. A file that
+	 * still has it gets each box colour's fill worked out from it once, so boxes look the same
+	 * after the update; the next save drops the key.
+	 */
+	private static final String LEGACY_FILL_SHARE = "boxes.fillOpacity";
 
 	private ConfigFile() {
 	}
@@ -63,18 +76,29 @@ public final class ConfigFile {
 			return;
 		}
 
-		for (Setting<?> setting : Settings.all()) {
+		Double legacyShare = legacyShare(saved);
+		for (Setting<?> setting : Settings.settings()) {
 			JsonElement value = saved.get(setting.key());
 			if (value != null) {
-				apply(setting, value);
+				apply(setting, value, legacyShare);
 			}
+		}
+	}
+
+	/** @return the old shared fill share, or null when the file has none */
+	private static Double legacyShare(JsonObject saved) {
+		try {
+			JsonElement share = saved.get(LEGACY_FILL_SHARE);
+			return share == null ? null : Math.clamp(share.getAsDouble(), 0.0, 1.0);
+		} catch (RuntimeException wrongShape) {
+			return null;
 		}
 	}
 
 	/** Writes every setting's current value. */
 	public static void save() {
 		JsonObject out = new JsonObject();
-		for (Setting<?> setting : Settings.all()) {
+		for (Setting<?> setting : Settings.settings()) {
 			write(out, setting);
 		}
 
@@ -95,6 +119,7 @@ public final class ConfigFile {
 			case Boolean flag -> out.addProperty(setting.key(), flag);
 			case Number number -> out.addProperty(setting.key(), number);
 			case Enum<?> constant -> out.addProperty(setting.key(), constant.name());
+			case Swatch swatch -> out.addProperty(setting.key(), swatch.written());
 			default -> CherryPicking.LOGGER.warn("Setting {} holds an unsaveable {}.",
 					setting.key(), value == null ? "null" : value.getClass().getSimpleName());
 		}
@@ -109,7 +134,7 @@ public final class ConfigFile {
 	 * together in {@link Setting}'s signature.
 	 */
 	@SuppressWarnings("unchecked")
-	private static void apply(Setting<?> setting, JsonElement value) {
+	private static void apply(Setting<?> setting, JsonElement value, Double legacyShare) {
 		try {
 			switch (setting.control()) {
 				case Control.Flag ignored ->
@@ -120,6 +145,14 @@ public final class ConfigFile {
 						((Setting<Double>) setting).value(value.getAsDouble());
 				case Control.Choice<?> choice ->
 						applyChoice(setting, choice, value.getAsString());
+				case Control.Colour colour -> Swatch.read(value.getAsString()).ifPresentOrElse(
+						swatch -> ((Setting<Swatch>) setting).value(
+								colour.fill() && legacyShare != null && !Swatch.namesFill(value.getAsString())
+										? swatch.withFill((int) Math.round(swatch.alpha() * legacyShare))
+										: swatch),
+						() -> CherryPicking.LOGGER.warn(
+								"Saved colour for {} is neither a palette name nor a hex; keeping the default.",
+								setting.key()));
 			}
 		} catch (RuntimeException wrongShape) {
 			CherryPicking.LOGGER.warn("Saved value for {} could not be read; keeping the default.",
