@@ -6,12 +6,15 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.function.Predicate;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 
 import jeff.cherrypicking.CherryPicking;
 import jeff.cherrypicking.client.theme.Swatch;
@@ -38,6 +41,12 @@ import net.fabricmc.loader.api.FabricLoader;
  * <p>Nothing here throws. A config file is a convenience, and a mod that
  * refuses to start because one line of JSON is malformed is worse than one that
  * logs it and uses the defaults.
+ *
+ * <p>The file is the one place a value can arrive that no widget produced, so
+ * loading is where values are checked: each must have its control's JSON shape,
+ * and numbers are clamped to the control's limits. Saving writes a temporary
+ * file beside the real one and moves it into place, so a failed or interrupted
+ * save leaves the previous file whole.
  */
 public final class ConfigFile {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -49,6 +58,14 @@ public final class ConfigFile {
 	 */
 	private static final String LEGACY_FILL_SHARE = "boxes.fillOpacity";
 
+	/**
+	 * Creeper Beams has no colour picker, so its fill is a setting of its own. Before fills were
+	 * per colour, lanterns filled at their outline opacity times the shared share; an old file gets
+	 * that product once, like the box colours.
+	 */
+	private static final String BEAMS_OUTLINE = "beams.alpha";
+	private static final String BEAMS_FILL = "beams.fillAlpha";
+
 	private ConfigFile() {
 	}
 
@@ -58,7 +75,10 @@ public final class ConfigFile {
 
 	/** Applies the saved file over the defaults. Silent when there is no file yet. */
 	public static void load() {
-		Path file = path();
+		load(path());
+	}
+
+	static void load(Path file) {
 		if (!Files.isRegularFile(file)) {
 			return;
 		}
@@ -83,6 +103,15 @@ public final class ConfigFile {
 				apply(setting, value, legacyShare);
 			}
 		}
+		if (legacyShare != null && !saved.has(BEAMS_FILL)) {
+			legacyBeamsFill(legacyShare);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private static void legacyBeamsFill(double share) {
+		Settings.byKey(BEAMS_OUTLINE).ifPresent(outline -> Settings.byKey(BEAMS_FILL).ifPresent(fill ->
+				((Setting<Double>) fill).value((Double) outline.value() * share)));
 	}
 
 	/** @return the old shared fill share, or null when the file has none */
@@ -97,19 +126,30 @@ public final class ConfigFile {
 
 	/** Writes every setting's current value. */
 	public static void save() {
+		save(path());
+	}
+
+	static void save(Path file) {
 		JsonObject out = new JsonObject();
 		for (Setting<?> setting : Settings.settings()) {
 			write(out, setting);
 		}
 
-		Path file = path();
+		Path temporary = file.resolveSibling(file.getFileName() + ".tmp");
 		try {
 			Files.createDirectories(file.getParent());
-			try (Writer writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
+			try (Writer writer = Files.newBufferedWriter(temporary, StandardCharsets.UTF_8)) {
 				GSON.toJson(out, writer);
 			}
+			Files.move(temporary, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
 		} catch (IOException | RuntimeException failed) {
-			CherryPicking.LOGGER.warn("Could not write the config to {}.", file, failed);
+			CherryPicking.LOGGER.warn("Could not write the config to {}; the previous file is unchanged.",
+					file, failed);
+			try {
+				Files.deleteIfExists(temporary);
+			} catch (IOException | RuntimeException ignored) {
+				// Left for the next save to overwrite.
+			}
 		}
 	}
 
@@ -138,26 +178,49 @@ public final class ConfigFile {
 		try {
 			switch (setting.control()) {
 				case Control.Flag ignored ->
-						((Setting<Boolean>) setting).value(value.getAsBoolean());
-				case Control.Whole ignored ->
-						((Setting<Integer>) setting).value(value.getAsInt());
-				case Control.Real ignored ->
-						((Setting<Double>) setting).value(value.getAsDouble());
+						((Setting<Boolean>) setting).value(shaped(value, JsonPrimitive::isBoolean).getAsBoolean());
+				case Control.Whole whole ->
+						((Setting<Integer>) setting).value(Math.clamp(Math.round(finite(value)), whole.min(), whole.max()));
+				case Control.Real real ->
+						((Setting<Double>) setting).value(Math.clamp(finite(value), real.min(), real.max()));
 				case Control.Choice<?> choice ->
-						applyChoice(setting, choice, value.getAsString());
-				case Control.Colour colour -> Swatch.read(value.getAsString()).ifPresentOrElse(
-						swatch -> ((Setting<Swatch>) setting).value(
-								colour.fill() && legacyShare != null && !Swatch.namesFill(value.getAsString())
-										? swatch.withFill((int) Math.round(swatch.alpha() * legacyShare))
-										: swatch),
-						() -> CherryPicking.LOGGER.warn(
-								"Saved colour for {} is neither a palette name nor a hex; keeping the default.",
-								setting.key()));
+						applyChoice(setting, choice, shaped(value, JsonPrimitive::isString).getAsString());
+				case Control.Colour colour -> {
+					String text = shaped(value, JsonPrimitive::isString).getAsString();
+					Swatch.read(text).ifPresentOrElse(
+							swatch -> ((Setting<Swatch>) setting).value(
+									colour.fill() && legacyShare != null && !Swatch.namesFill(text)
+											? swatch.withFill((int) Math.round(swatch.alpha() * legacyShare))
+											: swatch),
+							() -> CherryPicking.LOGGER.warn(
+									"Saved colour for {} is neither a palette name nor a hex; keeping the default.",
+									setting.key()));
+				}
 			}
 		} catch (RuntimeException wrongShape) {
 			CherryPicking.LOGGER.warn("Saved value for {} could not be read; keeping the default.",
 					setting.key(), wrongShape);
 		}
+	}
+
+	/**
+	 * Gson turns {@code "yes"} into {@code false} and {@code 3} into {@code "3"} without complaint,
+	 * so each control accepts only its own JSON type.
+	 */
+	private static JsonPrimitive shaped(JsonElement value, Predicate<JsonPrimitive> type) {
+		if (value.isJsonPrimitive() && type.test(value.getAsJsonPrimitive())) {
+			return value.getAsJsonPrimitive();
+		}
+		throw new IllegalArgumentException("wrong JSON type: " + value);
+	}
+
+	/** A number that is not NaN or infinite; the lenient parser accepts both. */
+	private static double finite(JsonElement value) {
+		double number = shaped(value, JsonPrimitive::isNumber).getAsDouble();
+		if (!Double.isFinite(number)) {
+			throw new IllegalArgumentException("not a finite number: " + value);
+		}
+		return number;
 	}
 
 	@SuppressWarnings("unchecked")
