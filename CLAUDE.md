@@ -39,51 +39,23 @@ synthesize input.** Detection, rendering, and suggestion are accepted QOL on Hyp
 automation is a bannable macro. Reject automation requests, and say why. Messages go to the
 player's own chat through `client.dungeon.Chat`; the mod never sends chat or commands to the server.
 
-## Code quality
+## Code quality and verification
 
-The goal is code where a change to one feature cannot break another, and a bug is easy to find.
-Every rule here serves that goal. When a rule and a shortcut conflict, the rule wins.
+The general rules - one behavior per change, one owner per piece of state, no speculative code,
+self-review of the diff, tests, reporting, git - are global, in `~/.claude/CLAUDE.md`
+(`~/.codex/AGENTS.md` for Codex). This section adds only what is specific to this mod.
 
-- **One behavior per change.** Do only what the task needs. Do not rename, reformat or "tidy" code
-  the task does not touch. Report other problems you see; do not fix them unasked.
-- **Follow the existing pattern.** Before adding a setting, puzzle, mark, theme or integration, read
-  how the existing ones are built (`docs/architecture.md`, "Build and extension workflow"). A second
-  way to do a thing the code already does is a defect.
-- **One owner per piece of state.** Each field has one class that writes it. Other classes read it
-  through that class's getter or published snapshot. Do not copy or cache state another class owns.
-- **No speculative code.** No interface with one implementation, no option nobody asked for, no
-  parameter every caller passes the same value, no helper "for later". Add it when the second user
-  exists.
-- **Duplication beats the wrong abstraction.** Share code only when the callers must change
-  together. Two similar blocks that can drift apart stay separate.
-- **Validate at the edge, trust inside.** Server text, the saved config and bundled resource files
-  are checked where they enter, with a logged fallback. Internal code does not repeat null checks or
-  wrap calls in `try`/`catch` "to be safe".
-- **Delete, don't disable.** Remove dead code, retired settings and unused scaffolding. Do not
-  comment code out or leave it behind a flag.
-- **Comments say why.** A comment the code no longer matches is a bug; fix it in the same change.
-- **Small diffs.** If a fix needs edits outside the feature it belongs to, stop and explain why
-  before you continue. That spread is usually the real problem.
-
-Before you finish, review your own diff. For each added class, method, parameter, setting and
-comment, confirm the task needs it and it has a caller today. Remove what fails that test.
-
-## Verification and reporting
-
-- **Test logic that can run without a live game** - config parsing, swatches, room coordinates,
-  solver decisions. A test asserts what the player or caller sees, not which private methods run.
-  A bug fix comes with a test that fails without the fix. `src/test` does not exist yet; until it
-  does, say in your report that no test covers the change.
-- **Report three things separately:** what changed, what the build and tests proved, and which
-  in-game checks are still open. Never describe a change as working in game before the player says
-  so.
-- **Keep the docs true.** When a change alters a fact stated here or in `docs/architecture.md`,
-  update the doc in the same change. Stale instructions produce wrong code in the next session.
-- **Git.** Commit each step that builds, with a body that says what was wrong and why this fix.
-  Never commit a broken build. Do not push unless asked.
-
-Planned work, its evidence and the next task are in `docs/modernization-plan.md`. Update its progress
-table when a milestone finishes.
+- **Existing patterns to follow** for a setting, puzzle, mark, theme or integration are in
+  `docs/architecture.md`, "Build and extension workflow".
+- **The edges** where input is validated are server text (sidebar, nametags), the shared locraw
+  reply, the saved config and the bundled resource files under `assets/cherrypicking/`.
+- **Testable without the game:** config parsing, swatches, room coordinates and solver decisions.
+  `src/test` does not exist yet; until it does, say in your report that no test covers the change.
+- **Manual checks** are the in-game checks above. Never describe a change as working in game before
+  the player marks it `PASS`.
+- **Docs to keep true:** this file and `docs/architecture.md`. Planned work, its evidence and the
+  next task are in `docs/modernization-plan.md`; update its progress table when a milestone
+  finishes.
 
 ## Target versions
 

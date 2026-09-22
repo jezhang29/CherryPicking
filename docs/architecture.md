@@ -11,7 +11,7 @@ provides a custom settings screen. It does not automate movement, attacks, inter
 chat. Features announce locally through `client.dungeon.Chat`; it does not send `/locraw`.
 
 - [CLAUDE.md](../CLAUDE.md) contains development instructions, including display-only behavior,
-  code-quality and verification rules, stable settings keys, optional integrations and real-client
+  project-specific verification rules, stable settings keys, optional integrations and real-client
   testing. `AGENTS.md` is a symlink to it, so Codex reads the same file.
 - [dungeon-layer.md](dungeon-layer.md) preserves detailed design rationale and upstream research.
   Its original feature list and stages mix implemented and future work. It is not a release list.
