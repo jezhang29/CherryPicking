@@ -12,8 +12,9 @@ never the link.
 ## Commands
 
 ```bash
-./gradlew build                 # compile + jar + install into the Minecraft mods folder
+./gradlew build                 # compile + test + jar + install into the Minecraft mods folder
 ./gradlew build -x installMod   # verify without touching the live mods folder
+./gradlew test                  # tests only
 ./gradlew clean build           # after editing gradle.properties
 ```
 
@@ -50,7 +51,9 @@ self-review of the diff, tests, reporting, git - are global, in `~/.claude/CLAUD
 - **The edges** where input is validated are server text (sidebar, nametags), the shared locraw
   reply, the saved config and the bundled resource files under `assets/cherrypicking/`.
 - **Testable without the game:** config parsing, swatches, room coordinates and solver decisions.
-  `src/test` does not exist yet; until it does, say in your report that no test covers the change.
+  Tests are plain JUnit 5 under `src/test`. `installMod` depends on `check`, so a jar with a failing
+  test is never installed. Expected values in a test are written out by hand, never computed by the
+  code under test.
 - **Manual checks** are the in-game checks above. Never describe a change as working in game before
   the player marks it `PASS`.
 - **Docs to keep true:** this file and `docs/architecture.md`. Planned work, its evidence and the

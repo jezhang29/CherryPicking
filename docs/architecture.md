@@ -201,7 +201,8 @@ ModMenu 20.0.1. Metadata declares Minecraft `~26.2`, Java `>=25`, Loader `>=0.19
 macOS Minecraft mods directory when present. The destination includes the version
 (`cherrypicking-1.0.0.jar` today), so a later version can leave an older jar installed.
 CI runs `build` on Ubuntu/JDK 25 and uploads `build/libs`; the Mac-specific destination normally
-does not exist there. There is no test source tree or configured test library at this baseline.
+does not exist there. JUnit 5 tests live under `src/test`; `installMod` depends on `check`, so a failing test blocks
+installation. Gradle fails `test` when test sources exist but no test is discovered.
 
 For verification without installing:
 
