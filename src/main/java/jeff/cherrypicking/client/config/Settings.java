@@ -39,8 +39,8 @@ import jeff.cherrypicking.client.theme.Theme;
  *   <li>a stable {@code key} - it is the name in the config file, so renaming
  *       one quietly discards what players had saved;</li>
  *   <li>a {@code label} a player would recognise;</li>
- *   <li>a {@code blurb} of <b>one plain sentence</b>: what it does and why you
- *       would touch it, not how it is implemented;</li>
+ *   <li>a {@code blurb} of <b>one or two short, plain sentences</b>: what it does
+ *       and why you would touch it, not how it is implemented;</li>
  *   <li>a {@link Section}, which decides where it lands.</li>
  * </ul>
  *
@@ -64,23 +64,23 @@ public final class Settings {
 
 	static {
 		add("theme.flavour", "Colour theme",
-				"Which editor theme's colours the settings screen and the in-world markers use.",
+				"Sets the colors for this screen and for the markers you see in the world.",
 				Section.THEME, new Control.Choice<>(Flavour.class, Flavour::label, Flavour::preview),
 				Theme::flavour, Theme::flavour);
 		choice("theme.accent", "Accent colour", Section.THEME,
-				"Which colour highlights the selected tab and the sliders.",
+				"Picks the color for the selected tab and the sliders.",
 				Theme.Accent.class, Theme.Accent::label, Theme::accent, Theme::accent);
 
 		whole("screen.cardWidth", "Card width", Section.SCREEN,
-				"How wide a column of settings is; wider cards mean fewer of them side by side.",
+				"Sets how wide each column of settings is. Wider columns mean fewer fit side by side.",
 				new Control.Whole(ScreenSettings.MIN_CARD_WIDTH, ScreenSettings.MAX_CARD_WIDTH, 10,
 						"px"),
 				ScreenSettings::cardWidth, ScreenSettings::cardWidth);
 		flag("screen.compact", "Compact rows", Section.SCREEN,
-				"Squeezes the rows together, so more settings fit before you have to scroll.",
+				"Packs the rows closer together so more settings fit without scrolling.",
 				ScreenSettings::compact, ScreenSettings::compact);
 		flag("screen.tooltips", "Show descriptions on hover", Section.SCREEN,
-				"Explains a setting when you rest the pointer on it, and shows its name in the config file.",
+				"Shows a short description like this one when you hover over a setting.",
 				ScreenSettings::tooltips, ScreenSettings::tooltips);
 
 		flag("puzzles.enabled", "Solve puzzles", Section.PUZZLES,
@@ -88,23 +88,23 @@ public final class Settings {
 				Puzzles::enabled, Puzzles::enabled);
 		when(Puzzles::enabled, () -> {
 			whole("puzzles.drawDistance", "Draw distance", Section.PUZZLES,
-					"How far away a puzzle's markers still show.",
+					"How far away you can still see puzzle markers.",
 					new Control.Whole(16, 128, 8, "blocks"),
 					Puzzles::drawDistance, Puzzles::drawDistance);
 			flag("puzzles.throughWalls", "Draw through walls", Section.PUZZLES,
-					"Shows puzzle markers through blocks, instead of only where you can see them.",
+					"Shows puzzle markers through blocks, not just in plain sight.",
 					Puzzles::throughWalls, Puzzles::throughWalls);
 
 			Blaze blaze = Puzzles.BLAZE;
 			flag("blaze.enabled", "Solve Blaze", Section.BLAZE,
-					"Boxes the blazes in the order to kill them, lowest or highest health first.",
+					"Boxes the blazes in the order you should kill them.",
 					blaze::enabled, blaze::enabled);
 			when(blaze::enabled, () -> {
 				choice("blaze.style", "Box style", Section.BLAZE,
-						"Whether each box is filled, outlined, or both.",
+						"Draws each box filled, outlined, or both.",
 						Style.class, Style::label, blaze::style, blaze::style);
 				flag("blaze.nextLine", "Line to the next blaze", Section.BLAZE,
-						"Draws a line from each blaze to the one you kill after it.",
+						"Draws a line from each blaze to the next one you kill.",
 						blaze::nextLine, blaze::nextLine);
 				whole("blaze.lines", "Lines", Section.BLAZE,
 						"How many blazes ahead the lines reach.",
@@ -114,124 +114,124 @@ public final class Settings {
 						new Control.Real(0.5, 5.0, 0.1, Control.Format.PLAIN),
 						blaze::lineWidth, blaze::lineWidth);
 				boxColour("blaze.firstColour", "First colour", Section.BLAZE,
-						"The colour of the blaze to kill now.",
+						"The color of the blaze to kill now.",
 						blaze::firstColour, blaze::firstColour);
 				boxColour("blaze.secondColour", "Second colour", Section.BLAZE,
-						"The colour of the blaze to kill next.",
+						"The color of the blaze to kill next.",
 						blaze::secondColour, blaze::secondColour);
 				boxColour("blaze.thirdColour", "Third colour", Section.BLAZE,
-						"The colour of the blaze to kill after that.",
+						"The color of the blaze to kill after that.",
 						blaze::thirdColour, blaze::thirdColour);
 				boxColour("blaze.otherColour", "Other colour", Section.BLAZE,
-						"The colour of every other blaze.",
+						"The color of every other blaze.",
 						blaze::otherColour, blaze::otherColour);
 				choice("blaze.order", "Order", Section.BLAZE,
-						"Which blaze comes first; Auto reads it from where the chest starts.",
+						"Sets whether you kill the lowest or highest health blaze first. Auto picks based on where the chest is.",
 						Blaze.Order.class, Blaze.Order::label, blaze::order, blaze::order);
 				flag("blaze.announce", "Say when solved", Section.BLAZE,
-						"Prints a line in your own chat when the last blaze dies; nobody else sees it.",
+						"Posts a message in your chat when the last blaze dies. Only you can see it.",
 						blaze::announce, blaze::announce);
 				action("blaze.reset", "Reset the Blaze solver", Section.BLAZE,
-						"Forgets the blazes and the chest, and looks again.",
+						"Clears the solver and scans the room again. Use it if the boxes look wrong.",
 						blaze::reset);
 			});
 
 			CreeperBeams beams = Puzzles.BEAMS;
 			flag("beams.enabled", "Solve Creeper Beams", Section.BEAMS,
-					"Pairs up the lit sea lanterns, one colour per pair.",
+					"Pairs up the lit sea lanterns and gives each pair its own color.",
 					beams::enabled, beams::enabled);
 			when(beams::enabled, () -> {
 				choice("beams.style", "Box style", Section.BEAMS,
-						"Whether each lantern's box is filled, outlined, or both.",
+						"Draws each lantern box filled, outlined, or both.",
 						Style.class, Style::label, beams::style, beams::style);
 				flag("beams.tracer", "Line between pairs", Section.BEAMS,
-						"Draws a line between the two lanterns of each pair.",
+						"Draws a line between the two lanterns in each pair.",
 						beams::tracer, beams::tracer);
 				// The only opacity sliders outside a picker: the lantern colours are a fixed cycle,
 				// so there is no colour picker here to carry them.
 				real("beams.alpha", "Outline opacity", Section.BEAMS,
-						"How solid the lantern boxes' outlines look; their colours are fixed, so this is set here.",
+						"How solid the box outlines look. The pair colors are fixed, so you set their opacity here.",
 						new Control.Real(0.0, 1.0, 0.05, Control.Format.PERCENT),
 						beams::alpha, beams::alpha);
 				real("beams.fillAlpha", "Fill opacity", Section.BEAMS,
-						"How solid the inside of the lantern boxes looks, apart from their outlines.",
+						"How solid the inside of each lantern box looks.",
 						new Control.Real(0.0, 1.0, 0.05, Control.Format.PERCENT),
 						beams::fillAlpha, beams::fillAlpha);
 				action("beams.reset", "Reset the Creeper Beams solver", Section.BEAMS,
-						"Forgets whether the puzzle was solved, and reads the lanterns again.",
+						"Clears the solver and checks the lanterns again. Use it if the pairs look wrong.",
 						beams::reset);
 			});
 		});
 
 		flag("livid.enabled", "Find the real Livid", Section.LIVID,
-				"Boxes the real Livid in the Floor 5 boss fight, visible through walls.",
+				"Boxes the real Livid in the Floor 5 boss fight. The box shows through walls.",
 				Livid::enabled, Livid::enabled);
 		when(Livid::enabled, () -> {
 			choice("livid.style", "Box style", Section.LIVID,
-					"Whether the box is filled, outlined, or both.",
+					"Draws the box filled, outlined, or both.",
 					Style.class, Style::label, Livid::style, Livid::style);
 			boxColour("livid.boxColour", "Box colour", Section.LIVID,
-					"The colour of the box around the real Livid.",
+					"The color of the box around the real Livid.",
 					Livid::boxColour, Livid::boxColour);
 			flag("livid.announce", "Name it in chat", Section.LIVID,
-					"Prints which Livid is real in your own chat; nobody else sees it.",
+					"Posts the real Livid's name in your chat. Only you can see it.",
 					Livid::announce, Livid::announce);
 			flag("livid.hideWhenBlind", "Hide while blinded", Section.LIVID,
-					"Hides the box while Livid has you blinded, which is when you need it most.",
+					"Hides the box while Livid blinds you. Leave it off if you want the box when it helps most.",
 					Livid::hideWhenBlind, Livid::hideWhenBlind);
 		});
 
 		flag("livid.title.enabled", "Show the colour on screen", Section.LIVID_TITLE,
-				"Calls out the real Livid's colour across the middle of your screen the moment it is known.",
+				"Flashes the real Livid's color across the middle of your screen as soon as the mod finds it.",
 				LividTitle::enabled, LividTitle::enabled);
 		when(LividTitle::enabled, () -> {
 			real("livid.title.scale", "Size", Section.LIVID_TITLE,
-					"How large the colour is drawn.",
+					"How big the color text is.",
 					new Control.Real(LividTitle.MIN_SCALE, LividTitle.MAX_SCALE, 0.25, Control.Format.PLAIN),
 					LividTitle::scale, LividTitle::scale);
 			real("livid.title.seconds", "How long it stays", Section.LIVID_TITLE,
-					"How many seconds the colour stays on screen before it fades.",
+					"How many seconds the color stays on screen before it fades.",
 					new Control.Real(LividTitle.MIN_SECONDS, LividTitle.MAX_SECONDS, 0.5,
 							Control.Format.SECONDS),
 					LividTitle::seconds, LividTitle::seconds);
 		});
 
 		flag("mobs.enabled", "Box starred mobs", Section.STAR_MOBS,
-				"Draws a coloured box around each starred mob in the room you are in, visible through walls.",
+				"Draws a colored box around each starred mob in your current room. The box shows through walls.",
 				StarMobWatch::enabled, StarMobWatch::enabled);
 		when(StarMobWatch::enabled, () -> {
 			flag("mobs.labels", "Name starred mobs", Section.STAR_MOBS,
-					"Floats the mob's name and its distance above the box.",
+					"Shows the mob's name and distance above its box.",
 					StarMobWatch::labels, StarMobWatch::labels);
 			flag("mobs.hiddenFels", "Box hidden Fels", Section.STAR_MOBS,
-					"Boxes every hidden Fels in the room before it comes out, even an unstarred one, because a hidden Fels shows no star yet.",
+					"Boxes hidden Fels before they come out. They don't show a star until then, so this catches them early.",
 					StarMobWatch::hiddenFels, StarMobWatch::hiddenFels);
 			kindColour("mobs.colour", MobKind.STARRED,
-					"The box colour for a starred mob that is not a Fels or a miniboss.");
+					"Box color for starred mobs that aren't Fels or minibosses.");
 			kindColour("mobs.felsColour", MobKind.FELS,
-					"The box colour for Fels, hidden or not.");
+					"Box color for Fels, hidden or not.");
 			kindColour("mobs.minibossColour", MobKind.MINIBOSS,
-					"The box colour for Shadow Assassins, Lost Adventurers, Angry Archaeologists and King Midas.");
+					"Box color for Shadow Assassins, Lost Adventurers, Angry Archaeologists, and King Midas.");
 		});
 
 		flag("quitting.cleanExit", "Quit cleanly", Section.QUITTING,
-				"Closes the game at once when you quit, instead of hanging and ending in a crash report because another mod left something running.",
+				"Closes the game right away when you quit. Without it, another mod can leave the game hanging until it crashes.",
 				CleanExit::enabled, CleanExit::enabled);
 
 		flag("developer.forceDungeon", "Force the Catacombs", Section.DEVELOPER,
-				"Acts as if you are in a dungeon everywhere, so the dungeon features can be tested elsewhere.",
+				"Treats every location as a dungeon so you can test dungeon features anywhere.",
 				DungeonState::forced, DungeonState::forced);
 		flag("developer.drawRoomFrame", "Draw the room frame", Section.DEVELOPER,
-				"Outlines the room you stand in and, once a puzzle claims it, its corner and axes.",
+				"Outlines the room you're standing in. Once a puzzle is found, it also marks the room's corner and facing.",
 				RoomWatch::drawRoomFrame, RoomWatch::drawRoomFrame);
 		flag("developer.logRoomFrame", "Log room frames", Section.DEVELOPER,
-				"Writes each room you enter, the frame found for it, and the dungeon sidebar to the game log.",
+				"Writes each room you enter and the dungeon sidebar to the game log. Useful for bug reports.",
 				RoomWatch::logRoomFrame, RoomWatch::logRoomFrame);
 		flag("developer.logSignatures", "Log signature checks", Section.DEVELOPER,
-				"Writes every block a puzzle checks to recognise its room to the game log.",
+				"Writes every block the mod checks while spotting puzzle rooms to the game log.",
 				RoomWatch::logSignatures, RoomWatch::logSignatures);
 		flag("developer.logPuzzles", "Log puzzle solvers", Section.DEVELOPER,
-				"Writes which solver starts in each room, how often it looks, and how much it draws, to the game log.",
+				"Writes what each puzzle solver does in each room to the game log.",
 				Puzzles::logging, Puzzles::logging);
 	}
 
