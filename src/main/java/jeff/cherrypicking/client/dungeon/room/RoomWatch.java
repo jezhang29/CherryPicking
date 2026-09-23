@@ -181,7 +181,7 @@ public final class RoomWatch {
 			roomTiles = tiles;
 			publish();
 			if (logRoomFrame) {
-				CherryPicking.LOGGER.info("Room: centre x {}, z {} spans {} tile(s)", centreX, centreZ,
+				CherryPicking.LOGGER.info("Room: center x {}, z {} spans {} tile(s)", centreX, centreZ,
 						Long.bitCount(tiles));
 			}
 		}
@@ -277,7 +277,7 @@ public final class RoomWatch {
 		generation++;
 		publish();
 		if (logRoomFrame) {
-			CherryPicking.LOGGER.info("Room: centre x {}, z {}", x, z);
+			CherryPicking.LOGGER.info("Room: center x {}, z {}", x, z);
 		}
 	}
 
@@ -303,7 +303,7 @@ public final class RoomWatch {
 		}
 
 		if (logRoomFrame && attempts == MAX_ATTEMPTS) {
-			CherryPicking.LOGGER.info("Room: nothing claimed centre x {}, z {}", centreX, centreZ);
+			CherryPicking.LOGGER.info("Room: nothing claimed center x {}, z {}", centreX, centreZ);
 		}
 	}
 

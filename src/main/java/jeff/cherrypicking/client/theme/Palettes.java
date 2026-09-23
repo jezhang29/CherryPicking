@@ -95,19 +95,19 @@ public final class Palettes {
 		try {
 			JsonObject colours = root.getAsJsonObject(flavour.key());
 			if (colours == null) {
-				throw new IllegalArgumentException("no such flavour");
+				throw new IllegalArgumentException("no such flavor");
 			}
 			Map<String, Integer> parsed = new HashMap<>();
 			for (String name : Palette.NAMES) {
 				JsonElement value = colours.get(name);
 				if (value == null) {
-					throw new IllegalArgumentException("no colour named " + name);
+					throw new IllegalArgumentException("no color named " + name);
 				}
 				parsed.put(name, rgb(value.getAsString()));
 			}
 			return new Palette(parsed);
 		} catch (RuntimeException malformed) {
-			CherryPicking.LOGGER.warn("Theme flavour '{}' is malformed ({}); using the built-in Latte for it.",
+			CherryPicking.LOGGER.warn("Theme flavor '{}' is malformed ({}); using the built-in Latte for it.",
 					flavour.key(), malformed.getMessage());
 			return builtInLatte();
 		}

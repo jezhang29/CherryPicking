@@ -125,7 +125,7 @@ final class Swatches implements Popover {
 
 		Chrome.Rect field = fieldRect();
 		hex = new EditBox(font, field.x() + 3, field.y() + 2, field.width() - 6, FIELD_HEIGHT - 2,
-				Component.literal("Hex colour"));
+				Component.literal("Hex color"));
 		hex.setBordered(false);
 		hex.setMaxLength(9);
 		hex.setTextShadow(false);

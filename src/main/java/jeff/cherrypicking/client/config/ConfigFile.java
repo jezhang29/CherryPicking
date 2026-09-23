@@ -193,7 +193,7 @@ public final class ConfigFile {
 											? swatch.withFill((int) Math.round(swatch.alpha() * legacyShare))
 											: swatch),
 							() -> CherryPicking.LOGGER.warn(
-									"Saved colour for {} is neither a palette name nor a hex; keeping the default.",
+									"Saved color for {} is neither a palette name nor a hex; keeping the default.",
 									setting.key()));
 				}
 			}

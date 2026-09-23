@@ -43,7 +43,7 @@ public record Palette(Map<String, Integer> colours) {
 			return argb;
 		}
 		if (WARNED.add(name)) {
-			CherryPicking.LOGGER.warn("No palette colour named '{}'; using text instead.", name);
+			CherryPicking.LOGGER.warn("No palette color named '{}'; using text instead.", name);
 		}
 		return colours.getOrDefault("text", 0xFF000000);
 	}

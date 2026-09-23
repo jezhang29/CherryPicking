@@ -253,7 +253,7 @@ public final class Blaze implements Puzzle {
 			}
 		}
 		if (chestTries == CHEST_TRIES) {
-			CherryPicking.LOGGER.info("Blaze: no chest within {} of centre x {}, z {}; set blaze.order.",
+			CherryPicking.LOGGER.info("Blaze: no chest within {} of center x {}, z {}; set blaze.order.",
 					CHEST_RADIUS, centreX, centreZ);
 		}
 		return chest;
