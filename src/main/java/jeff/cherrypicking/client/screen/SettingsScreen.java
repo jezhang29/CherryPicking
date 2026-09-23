@@ -33,7 +33,7 @@ import net.minecraft.network.chat.Component;
  * │  Puzzles   │ │ Flavor   Latte │ │ …                │    │  rail | card grid
  * │            │ └─────────────────┘ └──────────────────┘    │
  * ├────────────┴─────────────────────────────────────────────┤
- * │ 2 settings · 2 shown          [Reset tab] [Reset all] [Done] │  footer
+ * │ 2 settings · 2 shown                     [Reset tab] [Done] │  footer
  * └──────────────────────────────────────────────────────────┘
  * </pre>
  *
@@ -43,6 +43,10 @@ import net.minecraft.network.chat.Component;
  *
  * <p>Typing filters every tab at once. Escape clears a query first and only closes the screen
  * when there is nothing left to clear, so a filtered view is never thrown away by surprise.
+ *
+ * <p>One footer button resets. It resets what is on screen; with Shift held it resets everything,
+ * theme included, which almost no one wants, so it takes a deliberate key and never a stray
+ * click. After either reset the same button offers Undo for a few seconds.
  *
  * <p>Fold state lives here for the session and is not saved: it is a working state, not a
  * preference.
@@ -60,13 +64,13 @@ public final class SettingsScreen extends Screen {
 	private static final int BUTTON_HEIGHT = 14;
 	private static final int TOOLTIP_DELAY_MS = 350;
 	private static final int FLASH_FRAMES = 4;
-	/** How long "Reset all" waits for its second click. */
-	private static final long CONFIRM_MS = 3000;
+	/** How long the reset button offers Undo after a reset. */
+	private static final long UNDO_MS = 5000;
 
 	private static final String RESET_TAB = "Reset tab";
 	private static final String RESET_SHOWN = "Reset shown";
 	private static final String RESET_ALL = "Reset all";
-	private static final String CONFIRM = "Click again";
+	private static final String UNDO = "Undo";
 
 	private final Screen parent;
 	private final Search search = new Search();
@@ -80,8 +84,9 @@ public final class SettingsScreen extends Screen {
 
 	private String flashKey;
 	private int flashFrames;
-	/** When "Reset all" was first clicked; 0 while it is not waiting for a second click. */
-	private long resetAllArmedAt;
+	/** Puts back what the last reset changed; null when there is nothing to undo. */
+	private Runnable undo;
+	private long undoSince;
 
 	private Entry hoverEntry;
 	private long hoverSince;
@@ -351,7 +356,7 @@ public final class SettingsScreen extends Screen {
 				top + (FOOTER - font.lineHeight) / 2 + 1, Theme.of(Role.TEXT_DIM));
 	}
 
-	/** Right to left: Done, a gap, Reset all, Reset tab. Widths fit either label, so nothing jumps. */
+	/** Right to left: Done, a gap, the reset button. Its width fits every label, so nothing jumps. */
 	private List<FooterButton> footerButtons() {
 		int y = panelY + panelHeight - FOOTER + (FOOTER - BUTTON_HEIGHT) / 2;
 		int right = panelX + panelWidth - 8;
@@ -360,19 +365,24 @@ public final class SettingsScreen extends Screen {
 		Chrome.Rect done = new Chrome.Rect(right - doneWidth, y, doneWidth, BUTTON_HEIGHT);
 		right = done.x() - 12;
 
-		int allWidth = Math.max(font.width(RESET_ALL), font.width(CONFIRM)) + 12;
-		Chrome.Rect all = new Chrome.Rect(right - allWidth, y, allWidth, BUTTON_HEIGHT);
-		right = all.x() - 4;
+		int resetWidth = List.of(RESET_TAB, RESET_SHOWN, RESET_ALL, UNDO).stream()
+				.mapToInt(font::width).max().orElseThrow() + 12;
+		Chrome.Rect reset = new Chrome.Rect(right - resetWidth, y, resetWidth, BUTTON_HEIGHT);
 
-		int tabWidth = Math.max(font.width(RESET_TAB), font.width(RESET_SHOWN)) + 12;
-		Chrome.Rect shown = new Chrome.Rect(right - tabWidth, y, tabWidth, BUTTON_HEIGHT);
+		return List.of(resetButton(reset), new FooterButton("footer.done", "Done", done, Role.TEXT, this::onClose));
+	}
 
-		return List.of(
-				new FooterButton("footer.resetShown", search.active() ? RESET_SHOWN : RESET_TAB, shown,
-						Role.TEXT, this::resetShown),
-				new FooterButton("footer.resetAll", armed() ? CONFIRM : RESET_ALL, all, Role.DANGER,
-						this::resetAll),
-				new FooterButton("footer.done", "Done", done, Role.TEXT, this::onClose));
+	/** Undo while one is offered, else Reset all while Shift is held, else reset what is shown. */
+	private FooterButton resetButton(Chrome.Rect rect) {
+		if (undoOffered()) {
+			return new FooterButton("footer.reset", UNDO, rect, Role.ACCENT, this::undo);
+		}
+		if (minecraft.hasShiftDown()) {
+			return new FooterButton("footer.reset", RESET_ALL, rect, Role.DANGER,
+					() -> reset(Settings.settings()));
+		}
+		return new FooterButton("footer.reset", search.active() ? RESET_SHOWN : RESET_TAB, rect, Role.TEXT,
+				() -> reset(shownSettings()));
 	}
 
 	private void drawTooltip(GuiGraphicsExtractor graphics, Entry hovered, int mouseX, int mouseY) {
@@ -390,33 +400,35 @@ public final class SettingsScreen extends Screen {
 
 	// ------------------------------------------------------------------ actions
 
-	/** Resets every setting currently on screen: the tab, or the search results. */
-	private void resetShown() {
+	/** Every setting currently on screen: the tab, or the search results. */
+	private List<Setting<?>> shownSettings() {
+		List<Setting<?>> shown = new ArrayList<>();
 		for (Card card : cards()) {
 			for (Entry entry : card.entries()) {
 				if (entry instanceof Setting<?> setting) {
-					setting.reset();
+					shown.add(setting);
 				}
 			}
 		}
-		ConfigFile.save();
-		flash("footer.resetShown");
+		return shown;
 	}
 
-	/** Asks for a second click within three seconds before resetting everything. */
-	private void resetAll() {
-		if (!armed()) {
-			resetAllArmedAt = System.currentTimeMillis();
-			return;
-		}
-		resetAllArmedAt = 0;
-		Settings.resetAll();
+	private void reset(List<Setting<?>> settings) {
+		undo = Settings.reset(settings);
+		undoSince = System.currentTimeMillis();
 		ConfigFile.save();
-		flash("footer.resetAll");
+		flash("footer.reset");
 	}
 
-	private boolean armed() {
-		return resetAllArmedAt != 0 && System.currentTimeMillis() - resetAllArmedAt < CONFIRM_MS;
+	private void undo() {
+		undo.run();
+		undo = null;
+		ConfigFile.save();
+		flash("footer.reset");
+	}
+
+	private boolean undoOffered() {
+		return undo != null && System.currentTimeMillis() - undoSince < UNDO_MS;
 	}
 
 	private void flash(String key) {

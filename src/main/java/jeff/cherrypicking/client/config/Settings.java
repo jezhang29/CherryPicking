@@ -265,6 +265,23 @@ public final class Settings {
 	}
 
 	/**
+	 * Puts {@code settings} back to their defaults.
+	 *
+	 * @return puts them back to the values they held before this call
+	 */
+	public static Runnable reset(List<Setting<?>> settings) {
+		List<Runnable> undo = settings.stream().map(Settings::keep).toList();
+		settings.forEach(Setting::reset);
+		return () -> undo.forEach(Runnable::run);
+	}
+
+	/** Captures the value in force now, with its type, so it can be written back. */
+	private static <T> Runnable keep(Setting<T> setting) {
+		T kept = setting.value();
+		return () -> setting.value(kept);
+	}
+
+	/**
 	 * {@code BOTTOM_RIGHT} reads as "Bottom right". Here for the next {@code choice} over an enum
 	 * that has no {@code label()} of its own; every current one has.
 	 */
