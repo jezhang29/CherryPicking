@@ -12,7 +12,7 @@ import net.minecraft.world.phys.AABB;
  */
 public record RoomFrame(int anchorX, int anchorZ, Rotation rotation) {
 
-	/** The frame of the room centerd on {@code (centerX, centerZ)}, facing {@code rotation}. */
+	/** The frame of the room centered on {@code (centerX, centerZ)}, facing {@code rotation}. */
 	public static RoomFrame at(int centerX, int centerZ, Rotation rotation) {
 		return new RoomFrame(centerX + rotation.dx(), centerZ + rotation.dz(), rotation);
 	}

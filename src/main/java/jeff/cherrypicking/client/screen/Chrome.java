@@ -46,7 +46,7 @@ final class Chrome {
 			int height, boolean hovered, boolean flashing, Role face, Role text) {
 		Role fill = flashing ? Role.ACCENT : hovered ? Role.HOVER : face;
 		box(graphics, x, y, width, height, fill, Role.BORDER);
-		Text.centerd(graphics, font, label, x + width / 2, y + (height - font.lineHeight) / 2 + 1,
+		Text.centered(graphics, font, label, x + width / 2, y + (height - font.lineHeight) / 2 + 1,
 				Theme.of(flashing ? Role.PANEL : text));
 	}
 

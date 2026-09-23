@@ -104,7 +104,7 @@ public final class LividTitle {
 		Font font = client.font;
 		String text = name.color() + "!";
 		float size = (float) scale;
-		// Work in scaled units, so the text is centerd whatever size it is drawn at.
+		// Work in scaled units, so the text is centered whatever size it is drawn at.
 		int width = Math.round(graphics.guiWidth() / size);
 		int height = Math.round(graphics.guiHeight() / size);
 

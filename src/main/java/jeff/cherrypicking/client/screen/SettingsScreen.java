@@ -323,7 +323,7 @@ public final class SettingsScreen extends Screen {
 					row != null && placed == under ? row.entry() : null, flashKey);
 		}
 		if (layout.placed().isEmpty()) {
-			Text.centerd(graphics, font, search.active() ? "Nothing matches that search." : "Nothing here yet.",
+			Text.centered(graphics, font, search.active() ? "Nothing matches that search." : "Nothing here yet.",
 					bodyX + bodyWidth / 2, bodyY + 12, Theme.of(Role.TEXT_DIM));
 		}
 		graphics.disableScissor();
