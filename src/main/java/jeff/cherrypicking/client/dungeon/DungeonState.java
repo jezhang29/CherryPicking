@@ -204,7 +204,7 @@ public final class DungeonState {
 		return generation;
 	}
 
-	/** The sidebar as last read, top first, colour codes removed. */
+	/** The sidebar as last read, top first, color codes removed. */
 	public static List<String> sidebar() {
 		return sidebar;
 	}

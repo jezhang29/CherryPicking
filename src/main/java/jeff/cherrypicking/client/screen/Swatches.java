@@ -19,8 +19,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 
 /**
- * The colour popover: the live flavour's 26 colours, a shade square and hue bar for any other
- * colour, an opacity slider (two for a box colour: outline and fill), and a hex field.
+ * The color popover: the live flavor's 26 colors, a shade square and hue bar for any other
+ * color, an opacity slider (two for a box color: outline and fill), and a hex field.
  *
  * <pre>
  * ┌ First blaze ───────────────┐
@@ -32,25 +32,25 @@ import net.minecraft.util.Mth;
  * │ │ across, bright up│ ││    │
  * │ └──────────────────┘ └┘    │
  * │ ▓▓▓▓▓▒▒ Outline 70% ░░░░░  │  opacity
- * │ ▓▓▒▒░░░ Fill 35% ░░░░░░░░  │  a box colour's fill only
+ * │ ▓▓▒▒░░░ Fill 35% ░░░░░░░░  │  a box color's fill only
  * │ hex     [ #40a02b       ]  │
  * └────────────────────────────┘
  * </pre>
  *
- * <p>Picking from the grid commits a {@link Swatch.Named}, which follows the flavour. Typing a
+ * <p>Picking from the grid commits a {@link Swatch.Named}, which follows the flavor. Typing a
  * valid 6- or 8-digit hex, or dragging in the shade square or the hue bar, commits a
  * {@link Swatch.Literal}, which does not. Every commit is saved at once, so a player who quits
- * straight after picking keeps the colour.
+ * straight after picking keeps the color.
  *
- * <p><b>Opacity is the one control that never changes which kind a colour is.</b> It rides on the
- * colour itself ({@link Swatch#withAlpha}), so a palette colour dragged down to 40% is still that
- * palette colour and still re-tints with the flavour. That is why no feature needs an opacity
- * setting of its own next to its colours. A box colour's fill opacity rides on it the same way
+ * <p><b>Opacity is the one control that never changes which kind a color is.</b> It rides on the
+ * color itself ({@link Swatch#withAlpha}), so a palette color dragged down to 40% is still that
+ * palette color and still re-tints with the flavor. That is why no feature needs an opacity
+ * setting of its own next to its colors. A box color's fill opacity rides on it the same way
  * ({@link Swatch#withFill}), so each box decides how solid its inside is (check S4-09).
  *
  * <p>The palette grid comes first, so the palette stays the easy path; the shade square and the
- * hue bar reach every other colour without typing hex. The hue is held here rather than read back
- * from the colour, so dragging to grey or black and back does not lose it.
+ * hue bar reach every other color without typing hex. The hue is held here rather than read back
+ * from the color, so dragging to gray or black and back does not lose it.
  */
 final class Swatches implements Popover {
 	static final int WIDTH = 150;
@@ -70,13 +70,13 @@ final class Swatches implements Popover {
 	private static final int PICKER_HEIGHT = 56;
 	private static final int HUE_WIDTH = 10;
 	private static final int ALPHA_TOP = PICKER_TOP + PICKER_HEIGHT + 6;
-	/** Thick enough to hold the percentage, to read the colour through, and to grab without aiming. */
+	/** Thick enough to hold the percentage, to read the color through, and to grab without aiming. */
 	private static final int ALPHA_HEIGHT = 11;
 	private static final int ALPHA_CHECKER = 4;
 	/** The gap between the outline bar and the fill bar. */
 	private static final int ALPHA_GAP = 4;
 
-	/** The two greys of the chequerboard drawn behind a see-through colour. */
+	/** The two grays of the checkerboard drawn behind a see-through color. */
 	private static final int CHECKER_LIGHT = 0xFFBBBBBB;
 	private static final int CHECKER_DARK = 0xFF777777;
 
@@ -92,7 +92,7 @@ final class Swatches implements Popover {
 	private final Setting<Swatch> setting;
 	private final Runnable save;
 	private final EditBox hex;
-	/** True for a box colour, which gets the fill bar under the outline bar. */
+	/** True for a box color, which gets the fill bar under the outline bar. */
 	private final boolean fill;
 
 	private final int x;
@@ -115,7 +115,7 @@ final class Swatches implements Popover {
 	Swatches(Font font, Setting<Swatch> setting, Chrome.Rect anchor, Chrome.Rect bounds, Runnable save) {
 		this.setting = setting;
 		this.save = save;
-		this.fill = setting.control() instanceof Control.Colour colour && colour.fill();
+		this.fill = setting.control() instanceof Control.Color color && color.fill();
 		this.height = hexTop() + FIELD_HEIGHT + PAD;
 
 		this.x = Math.clamp(anchor.right() - WIDTH, bounds.x(), Math.max(bounds.x(), bounds.right() - WIDTH));
@@ -199,24 +199,24 @@ final class Swatches implements Popover {
 
 		int markX = shade.x() + Math.round(saturation * (shade.width() - 1));
 		int markY = shade.y() + Math.round((1.0f - brightness) * (shade.height() - 1));
-		// Fixed black and white, not roles: the marker sits on the colour, not on the panel.
+		// Fixed black and white, not roles: the marker sits on the color, not on the panel.
 		ring(graphics, markX - 2, markY - 2, 5, 5, brightness > 0.5f ? 0xFF000000 : 0xFFFFFFFF);
 		int hueY = bar.y() + Math.round(hue * (bar.height() - 1));
 		ring(graphics, bar.x() - 1, hueY - 1, bar.width() + 2, 3, 0xFFFFFFFF);
 	}
 
 	/**
-	 * The opacity slider: a chequerboard, the colour laid over it from clear to solid, a knob at
+	 * The opacity slider: a checkerboard, the color laid over it from clear to solid, a knob at
 	 * the current opacity, and the percentage inside the bar. The track shows the answer rather
 	 * than a number, so "how see-through is 40%" is read off the bar instead of guessed and then
 	 * tried in the world.
 	 *
 	 * <p><b>No label beside it.</b> A word in the margin cut the bar short and read as a bite out
-	 * of the chequerboard; the chequers say "opacity" on their own, so the bar takes the whole
-	 * content width and lines up with the shade square above it - see check S4-07. A box colour
+	 * of the checkerboard; the checkers say "opacity" on their own, so the bar takes the whole
+	 * content width and lines up with the shade square above it - see check S4-07. A box color
 	 * has two bars, so each names itself inside the bar, next to its percentage.
 	 *
-	 * @param name "Outline ", "Fill ", or empty for a colour with one bar
+	 * @param name "Outline ", "Fill ", or empty for a color with one bar
 	 */
 	private void drawAlpha(GuiGraphicsExtractor graphics, Font font, Chrome.Rect track, int alpha,
 			String name) {
@@ -235,7 +235,7 @@ final class Swatches implements Popover {
 		graphics.fill(knobX - 2, track.y() - 2, knobX + 3, track.bottom() + 2, 0xFFFFFFFF);
 		graphics.fill(knobX - 1, track.y() - 1, knobX + 2, track.bottom() + 1, 0xFF000000);
 
-		// The one shadowed text in the screen. It sits on the player's own colour rather than on a
+		// The one shadowed text in the screen. It sits on the player's own color rather than on a
 		// panel, so no theme role can be trusted to stay readable behind it; white on a shadow can.
 		String percent = name + Math.round(alpha / 255.0f * 100) + "%";
 		graphics.text(font, percent, track.x() + (track.width() - font.width(percent)) / 2,
@@ -352,7 +352,7 @@ final class Swatches implements Popover {
 		}
 	}
 
-	/** Puts the picker's colour into force, keeping the current opacity. Saved on release. */
+	/** Puts the picker's color into force, keeping the current opacity. Saved on release. */
 	private void commitShade() {
 		Swatch kept = setting.value();
 		setting.value(Swatch.of(Mth.hsvToArgb(Math.min(hue, 0.9999f), saturation, brightness, kept.alpha()))
@@ -360,7 +360,7 @@ final class Swatches implements Popover {
 		sync();
 	}
 
-	/** Moves the picker to the current colour. The hue is kept when the colour has none. */
+	/** Moves the picker to the current color. The hue is kept when the color has none. */
 	private void readShade() {
 		int argb = Theme.resolve(setting.value());
 		float r = ((argb >> 16) & 0xFF) / 255.0f;
@@ -376,7 +376,7 @@ final class Swatches implements Popover {
 		}
 	}
 
-	/** Opacity alone, so a palette colour dragged see-through stays a palette colour. */
+	/** Opacity alone, so a palette color dragged see-through stays a palette color. */
 	private void slideAlpha(double mouseX) {
 		Chrome.Rect track = alphaTrack();
 		double fraction = Math.clamp((mouseX - track.x()) / (track.width() - 1), 0.0, 1.0);
@@ -384,7 +384,7 @@ final class Swatches implements Popover {
 		sync();
 	}
 
-	/** The fill alone, on its own bar; the outline and the colour stay where they are. */
+	/** The fill alone, on its own bar; the outline and the color stay where they are. */
 	private void slideFill(double mouseX) {
 		Chrome.Rect track = fillTrack();
 		double fraction = Math.clamp((mouseX - track.x()) / (track.width() - 1), 0.0, 1.0);
@@ -399,7 +399,7 @@ final class Swatches implements Popover {
 		save.run();
 	}
 
-	/** The hex field's responder: commits as soon as what is typed is a whole colour. */
+	/** The hex field's responder: commits as soon as what is typed is a whole color. */
 	private void typed(String text) {
 		if (syncing) {
 			return;
@@ -412,7 +412,7 @@ final class Swatches implements Popover {
 		}
 	}
 
-	/** Shows the current colour in the hex field; six digits when it is opaque. */
+	/** Shows the current color in the hex field; six digits when it is opaque. */
 	private void sync() {
 		int argb = Theme.resolve(setting.value());
 		syncing = true;
@@ -448,7 +448,7 @@ final class Swatches implements Popover {
 		return new Chrome.Rect(x + PAD, y + ALPHA_TOP, WIDTH - 2 * PAD, ALPHA_HEIGHT);
 	}
 
-	/** The fill bar, under the outline bar and the same size. Only a box colour has one. */
+	/** The fill bar, under the outline bar and the same size. Only a box color has one. */
 	private Chrome.Rect fillTrack() {
 		return new Chrome.Rect(x + PAD, y + ALPHA_TOP + ALPHA_HEIGHT + ALPHA_GAP, WIDTH - 2 * PAD, ALPHA_HEIGHT);
 	}

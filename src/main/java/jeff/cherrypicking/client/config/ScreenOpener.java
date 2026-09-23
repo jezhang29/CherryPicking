@@ -9,7 +9,7 @@ import net.minecraft.client.gui.screens.Screen;
  * <p>A client command runs while the chat screen is still up, and chat closes
  * itself afterwards by setting the screen to null - so opening a screen inside
  * the command handler opens it and then has it closed out from under you. The
- * request is parked here instead and honoured on the first tick where nothing
+ * request is parked here instead and honored on the first tick where nothing
  * else is on screen.
  */
 public final class ScreenOpener {

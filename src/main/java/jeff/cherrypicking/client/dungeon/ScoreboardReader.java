@@ -31,7 +31,7 @@ public final class ScoreboardReader {
 		return objective == null ? "" : strip(objective.getDisplayName().getString());
 	}
 
-	/** Sidebar lines, top first, colour codes removed. */
+	/** Sidebar lines, top first, color codes removed. */
 	public static List<String> lines(ClientLevel level) {
 		Objective objective = sidebar(level);
 		if (objective == null) {
@@ -64,7 +64,7 @@ public final class ScoreboardReader {
 		return level == null ? null : level.getScoreboard().getDisplayObjective(DisplaySlot.SIDEBAR);
 	}
 
-	/** Drops section-sign colour codes and control characters. */
+	/** Drops section-sign color codes and control characters. */
 	public static String strip(String text) {
 		StringBuilder out = new StringBuilder(text.length());
 		for (int i = 0; i < text.length(); i++) {

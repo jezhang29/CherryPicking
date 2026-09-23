@@ -1,9 +1,9 @@
 package jeff.cherrypicking.client.theme;
 
 /**
- * What a colour is <i>for</i>, rather than which colour it is.
+ * What a color is <i>for</i>, rather than which color it is.
  *
- * <p>The screen names roles and never palette colours, so re-flavouring is one lookup in
+ * <p>The screen names roles and never palette colors, so re-flavoring is one lookup in
  * {@link Theme#of(Role)} and no screen edits. A role with no palette name follows the player's
  * chosen accent.
  */
@@ -62,7 +62,7 @@ public enum Role {
 		this.alphaPercent = alphaPercent;
 	}
 
-	/** @return the palette colour this role takes, or null when it follows the accent */
+	/** @return the palette color this role takes, or null when it follows the accent */
 	public String paletteName() {
 		return paletteName;
 	}

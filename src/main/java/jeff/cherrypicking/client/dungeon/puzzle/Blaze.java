@@ -57,7 +57,7 @@ public final class Blaze implements Puzzle {
 	private static final double LIFT = -2.0;
 	private static final double GROW_Y = 2.0;
 
-	// Where the chest is looked for: the column around the room's centre, over the
+	// Where the chest is looked for: the column around the room's center, over the
 	// heights the rooms use. §14.1.
 	private static final int CHEST_RADIUS = 4;
 	private static final int CHEST_BOTTOM = 12;
@@ -90,16 +90,16 @@ public final class Blaze implements Puzzle {
 	}
 
 	// Settings. Volatile: written by the config screen, read by the tick. Defaults
-	// are here, at the field. Colours after Odin's green, gold, red and white.
+	// are here, at the field. Colors after Odin's green, gold, red and white.
 	private volatile boolean enabled = true;
 	private volatile Style style = Style.FILLED_OUTLINE;
 	private volatile boolean nextLine = true;
 	private volatile int lines = 1;
 	private volatile double lineWidth = 2.0;
-	private volatile Swatch firstColour = Swatch.of("green");
-	private volatile Swatch secondColour = Swatch.of("peach");
-	private volatile Swatch thirdColour = Swatch.of("red");
-	private volatile Swatch otherColour = Swatch.of("overlay1");
+	private volatile Swatch firstColor = Swatch.of("green");
+	private volatile Swatch secondColor = Swatch.of("peach");
+	private volatile Swatch thirdColor = Swatch.of("red");
+	private volatile Swatch otherColor = Swatch.of("overlay1");
 	private volatile Order order = Order.AUTO;
 	private volatile boolean announce = false;
 
@@ -164,7 +164,7 @@ public final class Blaze implements Puzzle {
 			// The chest is not found yet. Box them all, in no order, rather than guess.
 			Marks.Builder builder = Marks.builder();
 			for (Found blaze : blazes) {
-				box(builder, player, blaze, otherColour);
+				box(builder, player, blaze, otherColor);
 			}
 			marks = builder.build();
 			return;
@@ -229,14 +229,14 @@ public final class Blaze implements Puzzle {
 		}
 		double middle = (low + high) / 2.0;
 
-		// The room's centre, from the first blaze's tile.
+		// The room's center, from the first blaze's tile.
 		Vec3 first = blazes.getFirst().at();
-		int centreX = ((BlockPos.containing(first).getX() + 201) >> 5) * 32 - 185;
-		int centreZ = ((BlockPos.containing(first).getZ() + 201) >> 5) * 32 - 185;
+		int centerX = ((BlockPos.containing(first).getX() + 201) >> 5) * 32 - 185;
+		int centerZ = ((BlockPos.containing(first).getZ() + 201) >> 5) * 32 - 185;
 
 		BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-		for (int x = centreX - CHEST_RADIUS; x <= centreX + CHEST_RADIUS; x++) {
-			for (int z = centreZ - CHEST_RADIUS; z <= centreZ + CHEST_RADIUS; z++) {
+		for (int x = centerX - CHEST_RADIUS; x <= centerX + CHEST_RADIUS; x++) {
+			for (int z = centerZ - CHEST_RADIUS; z <= centerZ + CHEST_RADIUS; z++) {
 				if (!level.hasChunk(x >> 4, z >> 4)) {
 					continue;
 				}
@@ -254,7 +254,7 @@ public final class Blaze implements Puzzle {
 		}
 		if (chestTries == CHEST_TRIES) {
 			CherryPicking.LOGGER.info("Blaze: no chest within {} of center x {}, z {}; set blaze.order.",
-					CHEST_RADIUS, centreX, centreZ);
+					CHEST_RADIUS, centerX, centerZ);
 		}
 		return chest;
 	}
@@ -266,23 +266,23 @@ public final class Blaze implements Puzzle {
 
 		for (int i = 0; i < blazes.size(); i++) {
 			Found blaze = blazes.get(i);
-			Swatch colour = switch (i) {
-				case 0 -> firstColour;
-				case 1 -> secondColour;
-				case 2 -> thirdColour;
-				default -> otherColour;
+			Swatch color = switch (i) {
+				case 0 -> firstColor;
+				case 1 -> secondColor;
+				case 2 -> thirdColor;
+				default -> otherColor;
 			};
-			box(builder, player, blaze, colour);
+			box(builder, player, blaze, color);
 			if (nextLine && i > 0 && i <= lines) {
-				builder.line(blazes.get(i - 1).at(), middle(blaze), Theme.resolve(colour), width);
+				builder.line(blazes.get(i - 1).at(), middle(blaze), Theme.resolve(color), width);
 			}
 		}
 		return builder.build();
 	}
 
-	private void box(Marks.Builder builder, LocalPlayer player, Found blaze, Swatch colour) {
+	private void box(Marks.Builder builder, LocalPlayer player, Found blaze, Swatch color) {
 		if (Puzzles.inReach(player, blaze.at())) {
-			builder.entityBox(blaze.standId(), INFLATE_XZ, LIFT, blaze.standHeight() + GROW_Y, colour, style);
+			builder.entityBox(blaze.standId(), INFLATE_XZ, LIFT, blaze.standHeight() + GROW_Y, color, style);
 		}
 	}
 
@@ -360,36 +360,36 @@ public final class Blaze implements Puzzle {
 		lineWidth = value;
 	}
 
-	public Swatch firstColour() {
-		return firstColour;
+	public Swatch firstColor() {
+		return firstColor;
 	}
 
-	public void firstColour(Swatch value) {
-		firstColour = value;
+	public void firstColor(Swatch value) {
+		firstColor = value;
 	}
 
-	public Swatch secondColour() {
-		return secondColour;
+	public Swatch secondColor() {
+		return secondColor;
 	}
 
-	public void secondColour(Swatch value) {
-		secondColour = value;
+	public void secondColor(Swatch value) {
+		secondColor = value;
 	}
 
-	public Swatch thirdColour() {
-		return thirdColour;
+	public Swatch thirdColor() {
+		return thirdColor;
 	}
 
-	public void thirdColour(Swatch value) {
-		thirdColour = value;
+	public void thirdColor(Swatch value) {
+		thirdColor = value;
 	}
 
-	public Swatch otherColour() {
-		return otherColour;
+	public Swatch otherColor() {
+		return otherColor;
 	}
 
-	public void otherColour(Swatch value) {
-		otherColour = value;
+	public void otherColor(Swatch value) {
+		otherColor = value;
 	}
 
 	public Order order() {

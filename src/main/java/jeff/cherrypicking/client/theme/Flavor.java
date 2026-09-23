@@ -3,7 +3,7 @@ package jeff.cherrypicking.client.theme;
 import java.util.List;
 
 /**
- * The colour themes the {@code theme.flavour} setting picks from: the four Catppuccin flavours and
+ * The color themes the {@code theme.flavor} setting picks from: the four Catppuccin flavors and
  * popular editor themes from IntelliJ and VS Code, dark ones first, then light ones.
  *
  * <p>Every theme fills the same 26 Catppuccin slots in {@code themes.json}, so the screen and the
@@ -11,7 +11,7 @@ import java.util.List;
  * file; {@link #label()} is what the screen shows. The constant's name is what the config file
  * saves, so never rename one.
  */
-public enum Flavour {
+public enum Flavor {
 	FRAPPE("frappe", "Catppuccin Frappé"),
 	MACCHIATO("macchiato", "Catppuccin Macchiato"),
 	MOCHA("mocha", "Catppuccin Mocha"),
@@ -45,7 +45,7 @@ public enum Flavour {
 	private final String key;
 	private final String label;
 
-	Flavour(String key, String label) {
+	Flavor(String key, String label) {
 		this.key = key;
 		this.label = label;
 	}
@@ -58,7 +58,7 @@ public enum Flavour {
 		return label;
 	}
 
-	/** A few of this theme's colours, so the dropdown shows what it looks like before it is picked. */
+	/** A few of this theme's colors, so the dropdown shows what it looks like before it is picked. */
 	public List<Integer> preview() {
 		Palette palette = Palettes.of(this);
 		return PREVIEW.stream().map(palette::of).toList();

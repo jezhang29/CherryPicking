@@ -33,8 +33,8 @@ import net.minecraft.world.phys.Vec3;
  * a starred mob is usually round a corner, and a depth-tested box shows up only
  * once you can already see it.
  *
- * <p><b>The opacity is the colour's own.</b> Each {@code mobs.*Colour} carries
- * an outline opacity and a fill opacity, set on the two sliders in its colour
+ * <p><b>The opacity is the color's own.</b> Each {@code mobs.*Color} carries
+ * an outline opacity and a fill opacity, set on the two sliders in its color
  * picker, the same split {@link DrawKit#box} makes everywhere else. So there is
  * no separate opacity setting to keep in step, and one kind of mob can be
  * louder than another.
@@ -52,7 +52,7 @@ public final class StarMobRenderer {
 
 	/**
 	 * Milder than {@link DrawKit#SHADE}: enough to show the box's shape, without
-	 * turning the side faces of a dark colour darker still.
+	 * turning the side faces of a dark color darker still.
 	 */
 	private static final float[] SHADE = {0.8f, 1.0f, 0.92f, 0.92f, 0.85f, 0.85f};
 
@@ -111,8 +111,8 @@ public final class StarMobRenderer {
 			OrderedSubmitNodeCollector collector = context.submitNodeCollector()
 					.order(ORDER_LAST - (drawn.size() - 1 - i));
 			BoxMesh mesh = BoxMesh.of(box);
-			int edge = Theme.resolve(mob.kind().colour());
-			int fill = Theme.resolveFill(mob.kind().colour());
+			int edge = Theme.resolve(mob.kind().color());
+			int fill = Theme.resolveFill(mob.kind().color());
 
 			if (fill >>> 24 > 0) {
 				collector.submitCustomGeometry(poseStack, CherryRenderTypes.quadsThroughWalls(),

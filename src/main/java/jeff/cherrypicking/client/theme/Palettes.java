@@ -17,38 +17,38 @@ import jeff.cherrypicking.CherryPicking;
 
 /**
  * Loads {@code assets/cherrypicking/theme/themes.json} and hands out one {@link Palette} per
- * {@link Flavour}.
+ * {@link Flavor}.
  *
- * <p>The colours are data, not code, so a corrected hex is an edit to the JSON, and a new theme is
- * the JSON plus one line in {@link Flavour}.
+ * <p>The colors are data, not code, so a corrected hex is an edit to the JSON, and a new theme is
+ * the JSON plus one line in {@link Flavor}.
  * The file is read once, lazily, straight off the classpath: it ships inside the jar, so it needs
  * no resource manager and is there before any resource reload has run.
  *
  * <p>Nothing here throws. A theme is a convenience, and a mod that will not start over one bad
- * hex is worse than one that logs it. A flavour that is missing or malformed falls back to the
+ * hex is worse than one that logs it. A flavor that is missing or malformed falls back to the
  * built-in Latte.
  */
 public final class Palettes {
 	private static final String PATH = "/assets/cherrypicking/theme/themes.json";
 
-	/** Latte, in {@link Palette#NAMES} order: the fallback for a missing or malformed flavour. */
+	/** Latte, in {@link Palette#NAMES} order: the fallback for a missing or malformed flavor. */
 	private static final int[] BUILT_IN_LATTE = {
 			0xdc8a78, 0xdd7878, 0xea76cb, 0x8839ef, 0xd20f39, 0xe64553, 0xfe640b,
 			0xdf8e1d, 0x40a02b, 0x179299, 0x04a5e5, 0x209fb5, 0x1e66f5, 0x7287fd,
 			0x4c4f69, 0x5c5f77, 0x6c6f85, 0x7c7f93, 0x8c8fa1, 0x9ca0b0,
 			0xacb0be, 0xbcc0cc, 0xccd0da, 0xeff1f5, 0xe6e9ef, 0xdce0e8};
 
-	private static volatile Map<Flavour, Palette> loaded;
+	private static volatile Map<Flavor, Palette> loaded;
 
 	private Palettes() {
 	}
 
-	public static Palette of(Flavour flavour) {
-		return all().get(flavour);
+	public static Palette of(Flavor flavor) {
+		return all().get(flavor);
 	}
 
-	private static Map<Flavour, Palette> all() {
-		Map<Flavour, Palette> palettes = loaded;
+	private static Map<Flavor, Palette> all() {
+		Map<Flavor, Palette> palettes = loaded;
 		if (palettes == null) {
 			synchronized (Palettes.class) {
 				palettes = loaded;
@@ -61,11 +61,11 @@ public final class Palettes {
 		return palettes;
 	}
 
-	private static Map<Flavour, Palette> load() {
+	private static Map<Flavor, Palette> load() {
 		JsonObject root = read();
-		Map<Flavour, Palette> palettes = new EnumMap<>(Flavour.class);
-		for (Flavour flavour : Flavour.values()) {
-			palettes.put(flavour, root == null ? builtInLatte() : parse(root, flavour));
+		Map<Flavor, Palette> palettes = new EnumMap<>(Flavor.class);
+		for (Flavor flavor : Flavor.values()) {
+			palettes.put(flavor, root == null ? builtInLatte() : parse(root, flavor));
 		}
 		return Map.copyOf(palettes);
 	}
@@ -91,15 +91,15 @@ public final class Palettes {
 		}
 	}
 
-	private static Palette parse(JsonObject root, Flavour flavour) {
+	private static Palette parse(JsonObject root, Flavor flavor) {
 		try {
-			JsonObject colours = root.getAsJsonObject(flavour.key());
-			if (colours == null) {
+			JsonObject colors = root.getAsJsonObject(flavor.key());
+			if (colors == null) {
 				throw new IllegalArgumentException("no such flavor");
 			}
 			Map<String, Integer> parsed = new HashMap<>();
 			for (String name : Palette.NAMES) {
-				JsonElement value = colours.get(name);
+				JsonElement value = colors.get(name);
 				if (value == null) {
 					throw new IllegalArgumentException("no color named " + name);
 				}
@@ -108,7 +108,7 @@ public final class Palettes {
 			return new Palette(parsed);
 		} catch (RuntimeException malformed) {
 			CherryPicking.LOGGER.warn("Theme flavor '{}' is malformed ({}); using the built-in Latte for it.",
-					flavour.key(), malformed.getMessage());
+					flavor.key(), malformed.getMessage());
 			return builtInLatte();
 		}
 	}
@@ -123,10 +123,10 @@ public final class Palettes {
 
 	private static Palette builtInLatte() {
 		List<String> names = Palette.NAMES;
-		Map<String, Integer> colours = new HashMap<>();
+		Map<String, Integer> colors = new HashMap<>();
 		for (int i = 0; i < names.size(); i++) {
-			colours.put(names.get(i), 0xFF000000 | BUILT_IN_LATTE[i]);
+			colors.put(names.get(i), 0xFF000000 | BUILT_IN_LATTE[i]);
 		}
-		return new Palette(colours);
+		return new Palette(colors);
 	}
 }

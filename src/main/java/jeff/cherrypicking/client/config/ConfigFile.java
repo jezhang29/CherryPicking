@@ -26,13 +26,13 @@ import net.fabricmc.loader.api.FabricLoader;
  *
  * <p>Flat, keyed by {@link Setting#key()}. That means a setting can be added,
  * removed or reordered without touching this class, and an old file loads into
- * a newer mod: keys it does not recognise are ignored, and settings the file
+ * a newer mod: keys it does not recognize are ignored, and settings the file
  * does not mention keep their default. Only {@link Settings#settings()} is
  * written; an {@link Action} has no value and never appears.
  *
- * <p>A colour is written as a string: {@code "green"} for a palette name, which
- * follows the flavour, or {@code "#aarrggbb"} for a literal, which does not. A
- * box colour may end in {@code "/59"}, its own fill opacity.
+ * <p>A color is written as a string: {@code "green"} for a palette name, which
+ * follows the flavor, or {@code "#aarrggbb"} for a literal, which does not. A
+ * box color may end in {@code "/59"}, its own fill opacity.
  *
  * <p>The file is this mod's own, under its own name. It is not shared with the
  * other mods in the family, so their release cycles cannot put saved player
@@ -52,16 +52,16 @@ public final class ConfigFile {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
 	/**
-	 * The one fill share every box used before each colour had a fill of its own. A file that
-	 * still has it gets each box colour's fill worked out from it once, so boxes look the same
+	 * The one fill share every box used before each color had a fill of its own. A file that
+	 * still has it gets each box color's fill worked out from it once, so boxes look the same
 	 * after the update; the next save drops the key.
 	 */
 	private static final String LEGACY_FILL_SHARE = "boxes.fillOpacity";
 
 	/**
-	 * Creeper Beams has no colour picker, so its fill is a setting of its own. Before fills were
-	 * per colour, lanterns filled at their outline opacity times the shared share; an old file gets
-	 * that product once, like the box colours.
+	 * Creeper Beams has no color picker, so its fill is a setting of its own. Before fills were
+	 * per color, lanterns filled at their outline opacity times the shared share; an old file gets
+	 * that product once, like the box colors.
 	 */
 	private static final String BEAMS_OUTLINE = "beams.alpha";
 	private static final String BEAMS_FILL = "beams.fillAlpha";
@@ -185,11 +185,11 @@ public final class ConfigFile {
 						((Setting<Double>) setting).value(Math.clamp(finite(value), real.min(), real.max()));
 				case Control.Choice<?> choice ->
 						applyChoice(setting, choice, shaped(value, JsonPrimitive::isString).getAsString());
-				case Control.Colour colour -> {
+				case Control.Color color -> {
 					String text = shaped(value, JsonPrimitive::isString).getAsString();
 					Swatch.read(text).ifPresentOrElse(
 							swatch -> ((Setting<Swatch>) setting).value(
-									colour.fill() && legacyShare != null && !Swatch.namesFill(text)
+									color.fill() && legacyShare != null && !Swatch.namesFill(text)
 											? swatch.withFill((int) Math.round(swatch.alpha() * legacyShare))
 											: swatch),
 							() -> CherryPicking.LOGGER.warn(

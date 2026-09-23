@@ -3,14 +3,14 @@ package jeff.cherrypicking.client.dungeon.mob;
 import jeff.cherrypicking.client.theme.Swatch;
 
 /**
- * What a starred mob is, read from its name stand. Decides the box colour.
+ * What a starred mob is, read from its name stand. Decides the box color.
  *
  * <p>Three kinds, because only these change what you do: Fels hide, and a
  * miniboss hits far harder than the rest. Every other starred mob is one kind.
  * The box height is not here: the mob's own bounding box is used, which fits
  * every mob, including a hidden Fels.
  *
- * <p>The colours are literal, not palette names. The boxes are drawn over grey
+ * <p>The colors are literal, not palette names. The boxes are drawn over gray
  * dungeon stone, where the Latte palette's darker accents are hard to see.
  */
 public enum MobKind {
@@ -22,12 +22,12 @@ public enum MobKind {
 	private final String label;
 	private final String[] names;
 
-	/** The {@code mobs.*Colour} setting. Written by the config screen, read per frame. */
-	private volatile Swatch colour;
+	/** The {@code mobs.*Color} setting. Written by the config screen, read per frame. */
+	private volatile Swatch color;
 
-	MobKind(String label, Swatch colour, String... names) {
+	MobKind(String label, Swatch color, String... names) {
 		this.label = label;
-		this.colour = colour;
+		this.color = color;
 		this.names = names;
 	}
 
@@ -47,11 +47,11 @@ public enum MobKind {
 		return label;
 	}
 
-	public Swatch colour() {
-		return colour;
+	public Swatch color() {
+		return color;
 	}
 
-	public void colour(Swatch value) {
-		colour = value;
+	public void color(Swatch value) {
+		color = value;
 	}
 }

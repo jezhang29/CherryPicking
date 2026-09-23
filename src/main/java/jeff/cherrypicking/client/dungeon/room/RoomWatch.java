@@ -28,11 +28,11 @@ import net.minecraft.world.phys.Vec3;
  *
  * <p><b>No dungeon map.</b> Odin reads the map item, hashes every room and
  * looks the hash up to learn the room's name. We never need the name: the room
- * centre comes from the player's position, and each puzzle identifies itself by
+ * center comes from the player's position, and each puzzle identifies itself by
  * probing a few of its own blocks. See docs/dungeon-layer.md §11.2.
  *
  * <ol>
- *   <li>The centre: {@code ((blockX + 201) >> 5) * 32 - 185}, the same for z.</li>
+ *   <li>The center: {@code ((blockX + 201) >> 5) * 32 - 185}, the same for z.</li>
  *   <li>Four candidate frames, one per {@link Rotation}.</li>
  *   <li>For each frame, each {@link Claimant}'s signature. The first that
  *       matches gives the frame and names the puzzle.</li>
@@ -84,10 +84,10 @@ public final class RoomWatch {
 	/** About three seconds of retries. */
 	private static final int MAX_ATTEMPTS = 9;
 
-	/** A room is 31 blocks across: its centre, plus this on each side. */
+	/** A room is 31 blocks across: its center, plus this on each side. */
 	private static final int HALF = 15;
 
-	/** Tile centres are this far apart; the seam sits at centre + 16. */
+	/** Tile centers are this far apart; the seam sits at center + 16. */
 	private static final int TILE = 32;
 
 	/** How far from the middle of a seam to look, so a door is never probed. */
@@ -122,8 +122,8 @@ public final class RoomWatch {
 	private static volatile boolean logSignatures;
 
 	// Watch state. Client thread only.
-	private static int centreX = NONE;
-	private static int centreZ = NONE;
+	private static int centerX = NONE;
+	private static int centerZ = NONE;
 	/** The room's tiles, bit {@code tileZ * TILES + tileX}. */
 	private static long roomTiles;
 	private static int attempts;
@@ -156,13 +156,13 @@ public final class RoomWatch {
 		int tileX = (player.getBlockX() + 201) >> 5;
 		int tileZ = (player.getBlockZ() + 201) >> 5;
 		if (tileX < 0 || tileX >= TILES || tileZ < 0 || tileZ >= TILES) {
-			if (centreX != NONE) {
+			if (centerX != NONE) {
 				forget();
 			}
 			return;
 		}
 
-		if (centreX == NONE || (roomTiles & bit(tileX, tileZ)) == 0) {
+		if (centerX == NONE || (roomTiles & bit(tileX, tileZ)) == 0) {
 			enter(tileX, tileZ);
 		}
 
@@ -176,12 +176,12 @@ public final class RoomWatch {
 		attempts++;
 
 		// The seams load with the chunks, so the shape can grow over the first tries.
-		long tiles = shape(level, tileOf(centreX), tileOf(centreZ));
+		long tiles = shape(level, tileOf(centerX), tileOf(centerZ));
 		if (tiles != roomTiles) {
 			roomTiles = tiles;
 			publish();
 			if (logRoomFrame) {
-				CherryPicking.LOGGER.info("Room: center x {}, z {} spans {} tile(s)", centreX, centreZ,
+				CherryPicking.LOGGER.info("Room: center x {}, z {} spans {} tile(s)", centerX, centerZ,
 						Long.bitCount(tiles));
 			}
 		}
@@ -194,12 +194,12 @@ public final class RoomWatch {
 		return 1L << (tileZ * TILES + tileX);
 	}
 
-	private static int centre(int tile) {
+	private static int center(int tile) {
 		return tile * TILE - 185;
 	}
 
-	private static int tileOf(int centre) {
-		return (centre + 185) / TILE;
+	private static int tileOf(int center) {
+		return (center + 185) / TILE;
 	}
 
 	/** Every tile joined to this one: a flood fill across the joined seams. */
@@ -232,8 +232,8 @@ public final class RoomWatch {
 	 * room. Probes both sides of the door, so a door alone never joins two rooms.
 	 */
 	private static boolean joined(ClientLevel level, int tileX, int tileZ, boolean alongX) {
-		int x = centre(tileX);
-		int z = centre(tileZ);
+		int x = center(tileX);
+		int z = center(tileZ);
 		if (alongX) {
 			return solid(level, x + HALF + 1, z - SEAM_PROBE) && solid(level, x + HALF + 1, z + SEAM_PROBE);
 		}
@@ -265,10 +265,10 @@ public final class RoomWatch {
 
 	/** A new room: drop the old frame and shape, and try on this tick. */
 	private static void enter(int tileX, int tileZ) {
-		int x = centre(tileX);
-		int z = centre(tileZ);
-		centreX = x;
-		centreZ = z;
+		int x = center(tileX);
+		int z = center(tileZ);
+		centerX = x;
+		centerZ = z;
 		roomTiles = bit(tileX, tileZ);
 		attempts = 0;
 		sinceTry = RETRY_TICKS - 1;
@@ -285,7 +285,7 @@ public final class RoomWatch {
 	private static void resolve(ClientLevel level) {
 		List<Claimant> candidates = claimants;
 		for (Rotation rotation : Rotation.values()) {
-			RoomFrame candidate = RoomFrame.at(centreX, centreZ, rotation);
+			RoomFrame candidate = RoomFrame.at(centerX, centerZ, rotation);
 			for (Claimant claimant : candidates) {
 				if (matches(level, candidate, claimant)) {
 					frame = candidate;
@@ -303,7 +303,7 @@ public final class RoomWatch {
 		}
 
 		if (logRoomFrame && attempts == MAX_ATTEMPTS) {
-			CherryPicking.LOGGER.info("Room: nothing claimed center x {}, z {}", centreX, centreZ);
+			CherryPicking.LOGGER.info("Room: nothing claimed center x {}, z {}", centerX, centerZ);
 		}
 	}
 
@@ -327,33 +327,33 @@ public final class RoomWatch {
 
 	/** The developer drawing: the room bounds, and the anchor and axes once a frame is found. */
 	private static void publish() {
-		if (!drawRoomFrame || centreX == NONE) {
+		if (!drawRoomFrame || centerX == NONE) {
 			marks = Marks.NONE;
 			return;
 		}
 
 		Marks.Builder builder = Marks.builder();
-		outline(builder, roomTiles, colour("teal"));
+		outline(builder, roomTiles, color("teal"));
 
 		RoomFrame now = frame;
 		int count = Long.bitCount(roomTiles);
-		Vec3 centre = count == 1
-				? new Vec3(centreX + 0.5, AXIS_Y + 2, centreZ + 0.5)
+		Vec3 center = count == 1
+				? new Vec3(centerX + 0.5, AXIS_Y + 2, centerZ + 0.5)
 				: middle(roomTiles);
 		if (now == null) {
-			builder.label(centre, count == 1
-					? "Room " + centreX + ", " + centreZ + " - no frame"
+			builder.label(center, count == 1
+					? "Room " + centerX + ", " + centerZ + " - no frame"
 					: "Room of " + count + " tiles - no frame");
 		} else {
 			Vec3 origin = Vec3.atCenterOf(now.real(0, AXIS_Y, 0));
 			Vec3 alongX = Vec3.atCenterOf(now.real(AXIS_LENGTH, AXIS_Y, 0));
 			Vec3 alongZ = Vec3.atCenterOf(now.real(0, AXIS_Y, AXIS_LENGTH));
 			builder.box(now.realBox(0, AXIS_Y, 0), Swatch.of("peach"), Style.FILLED_OUTLINE)
-					.line(origin, alongX, colour("red"), AXIS_WIDTH)
-					.line(origin, alongZ, colour("blue"), AXIS_WIDTH)
+					.line(origin, alongX, color("red"), AXIS_WIDTH)
+					.line(origin, alongZ, color("blue"), AXIS_WIDTH)
 					.label(alongX, "+x")
 					.label(alongZ, "+z")
-					.label(centre, puzzle + " - facing " + now.rotation());
+					.label(center, puzzle + " - facing " + now.rotation());
 		}
 		marks = builder.build();
 	}
@@ -362,7 +362,7 @@ public final class RoomWatch {
 	 * The room's outline as one shape: a line along every tile side that has no
 	 * room tile beyond it, at the bottom and the top, and an upright at each
 	 * corner. A tile that is joined on its +x or +z side reaches across the seam
-	 * to its neighbour, so sides meet and collinear pieces merge.
+	 * to its neighbor, so sides meet and collinear pieces merge.
 	 */
 	private static void outline(Marks.Builder builder, long tiles, int argb) {
 		// Sides as {fixed, from, to}: x-sides (lines of constant x) and z-sides.
@@ -378,10 +378,10 @@ public final class RoomWatch {
 			boolean west = tx > 0 && (tiles & bit(tx - 1, tz)) != 0;
 			boolean south = tz + 1 < TILES && (tiles & bit(tx, tz + 1)) != 0;
 			boolean north = tz > 0 && (tiles & bit(tx, tz - 1)) != 0;
-			int minX = centre(tx) - HALF;
-			int minZ = centre(tz) - HALF;
-			int maxX = centre(tx) + HALF + (east ? 2 : 1);
-			int maxZ = centre(tz) + HALF + (south ? 2 : 1);
+			int minX = center(tx) - HALF;
+			int minZ = center(tz) - HALF;
+			int maxX = center(tx) + HALF + (east ? 2 : 1);
+			int maxZ = center(tz) + HALF + (south ? 2 : 1);
 			if (!west) {
 				xSides.add(new int[] {minX, minZ, maxZ});
 			}
@@ -439,16 +439,16 @@ public final class RoomWatch {
 		int maxZ = Integer.MIN_VALUE;
 		for (int index = 0; index < TILES * TILES; index++) {
 			if ((tiles & (1L << index)) != 0) {
-				minX = Math.min(minX, centre(index % TILES));
-				maxX = Math.max(maxX, centre(index % TILES));
-				minZ = Math.min(minZ, centre(index / TILES));
-				maxZ = Math.max(maxZ, centre(index / TILES));
+				minX = Math.min(minX, center(index % TILES));
+				maxX = Math.max(maxX, center(index % TILES));
+				minZ = Math.min(minZ, center(index / TILES));
+				maxZ = Math.max(maxZ, center(index / TILES));
 			}
 		}
 		return new Vec3((minX + maxX) / 2.0 + 0.5, AXIS_Y + 2, (minZ + maxZ) / 2.0 + 0.5);
 	}
 
-	private static int colour(String name) {
+	private static int color(String name) {
 		return Theme.resolve(Swatch.of(name));
 	}
 
@@ -469,9 +469,9 @@ public final class RoomWatch {
 	}
 
 	private static void forget() {
-		boolean had = centreX != NONE || frame != null;
-		centreX = NONE;
-		centreZ = NONE;
+		boolean had = centerX != NONE || frame != null;
+		centerX = NONE;
+		centerZ = NONE;
 		roomTiles = 0;
 		attempts = 0;
 		sinceTry = 0;
@@ -493,7 +493,7 @@ public final class RoomWatch {
 	 * it. False when no room is known. Client thread only: it reads the watch state.
 	 */
 	public static boolean inRoom(double x, double z) {
-		if (centreX == NONE) {
+		if (centerX == NONE) {
 			return false;
 		}
 		int tileX = (Mth.floor(x) + 201) >> 5;

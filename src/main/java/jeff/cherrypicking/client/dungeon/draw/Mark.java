@@ -8,7 +8,7 @@ import net.minecraft.world.phys.Vec3;
  * {@link MarkRenderer} is the only code that draws them, so a new feature writes
  * no render code.
  *
- * <p>Every colour is {@code 0xAARRGGBB}, resolved from its swatch when the
+ * <p>Every color is {@code 0xAARRGGBB}, resolved from its swatch when the
  * feature publishes.
  */
 public sealed interface Mark {
@@ -36,8 +36,8 @@ public sealed interface Mark {
 	}
 
 	/**
-	 * Floating text. The colour rides in the component's own style, so a feature that wants a
-	 * coloured label builds a coloured component and needs nothing here.
+	 * Floating text. The color rides in the component's own style, so a feature that wants a
+	 * colored label builds a colored component and needs nothing here.
 	 *
 	 * @param scale a multiplier on the size the renderer already holds against distance; 1 is
 	 *     that size

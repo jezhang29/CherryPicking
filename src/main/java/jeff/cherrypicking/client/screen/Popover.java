@@ -7,7 +7,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 
 /**
- * What floats over the screen while one row is being edited: the colour picker or a choice's
+ * What floats over the screen while one row is being edited: the color picker or a choice's
  * dropdown. The screen holds at most one, sends it every click, drag, wheel and key first, and
  * draws it last.
  */

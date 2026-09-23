@@ -76,7 +76,7 @@ final class Widgets {
 		record Drag(Setting<?> setting, int trackX, int trackWidth) implements Hit {
 		}
 
-		/** A colour swatch was pressed; open the popover under {@code swatch}. */
+		/** A color swatch was pressed; open the popover under {@code swatch}. */
 		record Pick(Setting<Swatch> setting, Chrome.Rect swatch) implements Hit {
 		}
 
@@ -138,10 +138,10 @@ final class Widgets {
 						Theme.of(text));
 				yield chip.x();
 			}
-			case Control.Colour control -> {
+			case Control.Color control -> {
 				Chrome.Rect swatch = swatch(x, y, width);
 				Swatch value = ((Setting<Swatch>) setting).value();
-				// Chequers first, so a see-through colour reads as see-through on the row too and
+				// Checkers first, so a see-through color reads as see-through on the row too and
 				// not as a darker shade of itself against whatever card it happens to sit on.
 				checkers(graphics, swatch);
 				if (control.fill()) {
@@ -158,7 +158,7 @@ final class Widgets {
 		};
 	}
 
-	/** The two greys behind a see-through swatch, matching the picker's own chequerboard. */
+	/** The two grays behind a see-through swatch, matching the picker's own checkerboard. */
 	private static void checkers(GuiGraphicsExtractor graphics, Chrome.Rect rect) {
 		for (int column = 0; column * SWATCH_CHECKER < rect.width(); column++) {
 			int left = rect.x() + column * SWATCH_CHECKER;
@@ -239,7 +239,7 @@ final class Widgets {
 				cycle(setting, choice, 1);
 				yield new Hit.Done();
 			}
-			case Control.Colour ignored -> button == 0
+			case Control.Color ignored -> button == 0
 					? new Hit.Pick((Setting<Swatch>) setting, swatch(x, y, width))
 					: null;
 		};

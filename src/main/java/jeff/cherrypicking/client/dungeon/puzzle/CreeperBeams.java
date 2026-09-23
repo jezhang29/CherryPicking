@@ -31,8 +31,8 @@ import net.minecraft.world.phys.Vec3;
  * ends turn to prismarine as the puzzle is worked, so every poll re-reads all of them. That is 26
  * block reads, and it sees a teammate's beam as soon as the player's own.
  *
- * <p>Each pair has its own colour, from a cycle of eight palette accents in file order, so the
- * pairs are told apart at a glance and follow the flavour. Odin's cycle is gold, green, light
+ * <p>Each pair has its own color, from a cycle of eight palette accents in file order, so the
+ * pairs are told apart at a glance and follow the flavor. Odin's cycle is gold, green, light
  * purple, dark aqua, yellow, dark red, white, dark purple; these are its nearest Catppuccin names.
  *
  * <p>Solved when the chest at {@code (15, 69, 15)} appears where there was air.

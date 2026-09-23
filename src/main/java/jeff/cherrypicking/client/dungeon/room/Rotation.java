@@ -7,7 +7,7 @@ import net.minecraft.core.BlockPos;
  *
  * <p>Odin's {@code RoomRotation} and {@code VecUtils.rotateAroundNorth}: each
  * rotation names the corner its anchor sits in, as an offset from the room's
- * centre, and a turn of the room-relative {@code x} and {@code z}. {@code y} is
+ * center, and a turn of the room-relative {@code x} and {@code z}. {@code y} is
  * never turned; dungeon heights are absolute. See docs/dungeon-layer.md §3.1.
  */
 public enum Rotation {
@@ -24,12 +24,12 @@ public enum Rotation {
 		this.dz = dz;
 	}
 
-	/** The anchor corner's x offset from the room centre. */
+	/** The anchor corner's x offset from the room center. */
 	public int dx() {
 		return dx;
 	}
 
-	/** The anchor corner's z offset from the room centre. */
+	/** The anchor corner's z offset from the room center. */
 	public int dz() {
 		return dz;
 	}

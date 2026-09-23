@@ -12,7 +12,7 @@ import net.minecraft.world.phys.Vec3;
  * The vertex writers every mark shares: fill, lines, box and label.
  *
  * <p>Nothing here reads a setting, a location or a gate. It is given geometry
- * and a colour and writes vertices. No allocation per call beyond the lambdas
+ * and a color and writes vertices. No allocation per call beyond the lambdas
  * the collector needs; the geometry arrays were meshed on the client thread.
  *
  * <p>After coalroutegenerator's {@code glacite.GlaciteDraw}.
@@ -49,8 +49,8 @@ public final class DrawKit {
 	/**
 	 * A box in {@code style}. The pose must already be in world coordinates.
 	 *
-	 * @param argb the outline's colour
-	 * @param fill the inside's colour, with its own alpha
+	 * @param argb the outline's color
+	 * @param fill the inside's color, with its own alpha
 	 * @param throughWalls false to let terrain hide it
 	 */
 	public static void box(PoseStack poseStack, OrderedSubmitNodeCollector collector, BoxMesh mesh,
@@ -73,7 +73,7 @@ public final class DrawKit {
 	 *     coordinates
 	 * @param quads how many quads {@code vertices} holds
 	 * @param shade the per-quad brightness
-	 * @param argb the colour; its alpha is the opacity
+	 * @param argb the color; its alpha is the opacity
 	 */
 	public static void fill(PoseStack.Pose pose, VertexConsumer out, float[] vertices, int quads,
 			Shading shade, int argb) {
@@ -146,7 +146,7 @@ public final class DrawKit {
 	/**
 	 * A name tag at {@code at}, held at a readable size however far off it is.
 	 *
-	 * @param text carries its own colour, in its style
+	 * @param text carries its own color, in its style
 	 * @param scale a multiplier on the size distance already picked; 1 is that size
 	 */
 	public static void label(PoseStack poseStack, OrderedSubmitNodeCollector collector,

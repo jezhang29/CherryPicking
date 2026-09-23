@@ -29,26 +29,26 @@ import net.minecraft.world.level.block.state.BlockState;
  * from Devonian's code, which is GPL-3.0.
  *
  * <p><b>The wool names the real one.</b> When the fight starts, a wool block in
- * the arena ceiling turns the real Livid's colour. The Livids are player
+ * the arena ceiling turns the real Livid's color. The Livids are player
  * entities named {@code "<Name> Livid"}; the real one is the one whose name
  * matches the wool. The arena is at fixed world coordinates, so no room frame is
  * involved.
  *
  * <p><b>Named on the change, not on the first read.</b> The wool has a resting
- * colour before the fight, so reading it on arrival names the wrong Livid. Each
+ * color before the fight, so reading it on arrival names the wrong Livid. Each
  * spot's first loaded state is kept, and the first spot to change to one of the
  * nine wools names the real one, on that tick. Skyblocker's rule is the fallback,
- * for a real Livid whose colour is the resting one: two seconds after blindness
+ * for a real Livid whose color is the resting one: two seconds after blindness
  * first lands, the ceiling wool is trusted as it reads. Nothing is boxed before
  * then; a guess would box the wrong Livid eight times in nine.
  *
- * <p><b>Locked once found.</b> On M5 the real Livid can change colour later in
- * the fight (Skyblocker), so the first entity found under the named colour is
+ * <p><b>Locked once found.</b> On M5 the real Livid can change color later in
+ * the fight (Skyblocker), so the first entity found under the named color is
  * kept by id, and later wool changes are logged but not followed.
  *
- * <p><b>The colour, not the name.</b> Hypixel's nine Livids are called Frog,
+ * <p><b>The color, not the name.</b> Hypixel's nine Livids are called Frog,
  * Hockey, Arcade and so on, which say nothing about what to look for. Both the
- * chat line and {@link LividTitle} lead with the wool colour the Livid is
+ * chat line and {@link LividTitle} lead with the wool color the Livid is
  * wearing, and keep the Hypixel name after it for anyone who wants it.
  *
  * <p>Display-only: it reads one block, reads the entity list and draws a box.
@@ -70,7 +70,7 @@ public final class Livid {
 	private static final double INFLATE = 0.1;
 
 	/**
-	 * The nine Livids: Hypixel's name, the colour a player sees, and the wool
+	 * The nine Livids: Hypixel's name, the color a player sees, and the wool
 	 * blocks that name each.
 	 *
 	 * <p>The two greens are spelled out rather than left as Minecraft's "green"
@@ -83,23 +83,23 @@ public final class Livid {
 		CROSSED("Crossed", "PINK", ChatFormatting.LIGHT_PURPLE, 0xFF7FEF, DyeColor.MAGENTA, DyeColor.PINK),
 		ARCADE("Arcade", "YELLOW", ChatFormatting.YELLOW, 0xFFFF55, DyeColor.YELLOW),
 		SMILE("Smile", "LIGHT GREEN", ChatFormatting.GREEN, 0x7FFF55, DyeColor.LIME),
-		DOCTOR("Doctor", "GREY", ChatFormatting.GRAY, 0xBBBBBB, DyeColor.GRAY),
+		DOCTOR("Doctor", "GRAY", ChatFormatting.GRAY, 0xBBBBBB, DyeColor.GRAY),
 		PURPLE("Purple", "PURPLE", ChatFormatting.DARK_PURPLE, 0xC055FF, DyeColor.PURPLE),
 		FROG("Frog", "DARK GREEN", ChatFormatting.DARK_GREEN, 0x22BB22, DyeColor.GREEN),
 		SCREAM("Scream", "BLUE", ChatFormatting.BLUE, 0x5555FF, DyeColor.BLUE),
 		HOCKEY("Hockey", "RED", ChatFormatting.RED, 0xFF5555, DyeColor.RED);
 
 		private final String label;
-		private final String colour;
-		private final ChatFormatting chatColour;
+		private final String color;
+		private final ChatFormatting chatColor;
 		private final int rgb;
 		private final String entityName;
 		private final DyeColor[] wool;
 
-		Name(String label, String colour, ChatFormatting chatColour, int rgb, DyeColor... wool) {
+		Name(String label, String color, ChatFormatting chatColor, int rgb, DyeColor... wool) {
 			this.label = label;
-			this.colour = colour;
-			this.chatColour = chatColour;
+			this.color = color;
+			this.chatColor = chatColor;
 			this.rgb = rgb;
 			this.entityName = label + " Livid";
 			this.wool = wool;
@@ -108,8 +108,8 @@ public final class Livid {
 		/** The Livid this block names, or {@code null} when it is not one of the nine wools. */
 		static Name of(BlockState state) {
 			for (Name name : values()) {
-				for (DyeColor colour : name.wool) {
-					if (state.is(Blocks.WOOL.pick(colour))) {
+				for (DyeColor color : name.wool) {
+					if (state.is(Blocks.WOOL.pick(color))) {
 						return name;
 					}
 				}
@@ -123,16 +123,16 @@ public final class Livid {
 		}
 
 		/** What the player sees it wearing, e.g. {@code "DARK GREEN"}. */
-		public String colour() {
-			return colour;
+		public String color() {
+			return color;
 		}
 
-		/** That colour in chat. */
-		public ChatFormatting chatColour() {
-			return chatColour;
+		/** That color in chat. */
+		public ChatFormatting chatColor() {
+			return chatColor;
 		}
 
-		/** That colour on screen, brightened so it reads over the dark arena. */
+		/** That color on screen, brightened so it reads over the dark arena. */
 		public int rgb() {
 			return rgb;
 		}
@@ -143,7 +143,7 @@ public final class Livid {
 	private static volatile boolean enabled = true;
 	private static volatile Style style = Style.FILLED_OUTLINE;
 	/** Literal, like the starred-mob boxes: it is drawn over dark stone. */
-	private static volatile Swatch boxColour = Swatch.of(0xFF55FF55);
+	private static volatile Swatch boxColor = Swatch.of(0xFF55FF55);
 	private static volatile boolean announce = true;
 	/** Off: blindness is exactly when the box is needed, and the outline stays lit through it. */
 	private static volatile boolean hideWhenBlind = false;
@@ -208,7 +208,7 @@ public final class Livid {
 
 		Player livid = find(level);
 		marks = livid == null ? Marks.NONE : Marks.builder()
-				.entityBox(livid.getId(), INFLATE, 0, 0, boxColour, style)
+				.entityBox(livid.getId(), INFLATE, 0, 0, boxColor, style)
 				.build();
 	}
 
@@ -253,13 +253,13 @@ public final class Livid {
 	private static void name(Name named, String why) {
 		read = true;
 		real = named;
-		CherryPicking.LOGGER.info("Livid: {} names {} ({}).", why, named.colour(), named.label());
+		CherryPicking.LOGGER.info("Livid: {} names {} ({}).", why, named.color(), named.label());
 		if (announce) {
-			// The colour first and in its own colour: that is what the player looks for. The
+			// The color first and in its own color: that is what the player looks for. The
 			// Hypixel name follows, dimmed, for anyone reading it out to a party.
 			Chat.say(Component.literal("Real Livid: ")
 					.withStyle(ChatFormatting.GRAY)
-					.append(Component.literal(named.colour()).withStyle(named.chatColour()))
+					.append(Component.literal(named.color()).withStyle(named.chatColor()))
 					.append(Component.literal(" (" + named.label() + ")")
 							.withStyle(ChatFormatting.DARK_GRAY)));
 		}
@@ -321,12 +321,12 @@ public final class Livid {
 		style = value;
 	}
 
-	public static Swatch boxColour() {
-		return boxColour;
+	public static Swatch boxColor() {
+		return boxColor;
 	}
 
-	public static void boxColour(Swatch value) {
-		boxColour = value;
+	public static void boxColor(Swatch value) {
+		boxColor = value;
 	}
 
 	public static boolean announce() {

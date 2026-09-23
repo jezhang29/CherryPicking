@@ -1,5 +1,5 @@
 {
-	"_notice": "Catppuccin palette, https://github.com/catppuccin/palette - Copyright (c) 2021 Catppuccin. Released under the MIT License. The other themes are laid out in Catppuccin's 26 slots after the editor themes they are named for; where a theme has no colour for a slot, one close to its own palette fills it.",
+	"_notice": "Catppuccin palette, https://github.com/catppuccin/palette - Copyright (c) 2021 Catppuccin. Released under the MIT License. The other themes are laid out in Catppuccin's 26 slots after the editor themes they are named for; where a theme has no color for a slot, one close to its own palette fills it.",
 	"latte": {
 		"rosewater": "#dc8a78",
 		"flamingo": "#dd7878",

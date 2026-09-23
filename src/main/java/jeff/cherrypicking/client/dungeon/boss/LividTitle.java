@@ -11,16 +11,16 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /**
- * The real Livid's colour, across the middle of the screen: {@code RED!}.
+ * The real Livid's color, across the middle of the screen: {@code RED!}.
  *
  * <p>The fight is decided in the seconds while the player is blind and reading
- * nothing. A word in the wool's own colour is the fastest way to carry which
+ * nothing. A word in the wool's own color is the fastest way to carry which
  * Livid to hit; the chat line says the same thing, but chat is the one place
  * nobody looks mid-fight.
  *
- * <p><b>The colour, not the name.</b> Hypixel calls them Frog, Hockey, Arcade
+ * <p><b>The color, not the name.</b> Hypixel calls them Frog, Hockey, Arcade
  * and so on. Those names tell a player nothing about what to look at, so this
- * shows the wool colour, which is what the Livid is actually wearing.
+ * shows the wool color, which is what the Livid is actually wearing.
  *
  * <p>Drawn as this mod's own HUD element rather than through {@code Hud.setTitle},
  * so Hypixel's own titles cannot replace it halfway through and so the size and
@@ -41,7 +41,7 @@ public final class LividTitle {
 	 * How long the word takes to fade away, <b>after</b> its time is up.
 	 *
 	 * <p>The fade runs on the end of the set time rather than inside it, so
-	 * "how long it stays" is how long the colour is actually readable. Taking
+	 * "how long it stays" is how long the color is actually readable. Taking
 	 * the fade out of the set time made a 4-second call-out start dimming at
 	 * 3.5s, which reads as the word leaving early - see check S4-04.
 	 */
@@ -65,7 +65,7 @@ public final class LividTitle {
 				CherryPicking.id("livid_title"), LividTitle::draw);
 	}
 
-	/** Puts a Livid's colour on screen for {@link #seconds}. Client thread. */
+	/** Puts a Livid's color on screen for {@link #seconds}. Client thread. */
 	public static void show(Livid.Name name) {
 		showing = name;
 		shownAt = System.currentTimeMillis();
@@ -102,9 +102,9 @@ public final class LividTitle {
 		}
 
 		Font font = client.font;
-		String text = name.colour() + "!";
+		String text = name.color() + "!";
 		float size = (float) scale;
-		// Work in scaled units, so the text is centred whatever size it is drawn at.
+		// Work in scaled units, so the text is centerd whatever size it is drawn at.
 		int width = Math.round(graphics.guiWidth() / size);
 		int height = Math.round(graphics.guiHeight() / size);
 

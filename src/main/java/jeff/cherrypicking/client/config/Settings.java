@@ -20,7 +20,7 @@ import jeff.cherrypicking.client.dungeon.puzzle.CreeperBeams;
 import jeff.cherrypicking.client.dungeon.puzzle.Puzzles;
 import jeff.cherrypicking.client.dungeon.room.RoomWatch;
 import jeff.cherrypicking.client.screen.ScreenSettings;
-import jeff.cherrypicking.client.theme.Flavour;
+import jeff.cherrypicking.client.theme.Flavor;
 import jeff.cherrypicking.client.theme.Swatch;
 import jeff.cherrypicking.client.theme.Theme;
 
@@ -38,7 +38,7 @@ import jeff.cherrypicking.client.theme.Theme;
  * <ul>
  *   <li>a stable {@code key} - it is the name in the config file, so renaming
  *       one quietly discards what players had saved;</li>
- *   <li>a {@code label} a player would recognise;</li>
+ *   <li>a {@code label} a player would recognize;</li>
  *   <li>a {@code blurb} of <b>one or two short sentences</b> in ASD-STE100 Simplified Technical English
  *       with American spelling: what it does and why you would touch it, not how it
  *       is implemented;</li>
@@ -51,7 +51,7 @@ import jeff.cherrypicking.client.theme.Theme;
  * belongs to, and makes Reset restore what the code actually ships with rather
  * than a number copied over here and left behind.
  *
- * <p><b>Dependencies.</b> Wrap registrations in {@link #when} to grey them out
+ * <p><b>Dependencies.</b> Wrap registrations in {@link #when} to gray them out
  * while a master flag is off, so a card stays readable when its feature is
  * switched off.
  */
@@ -64,10 +64,10 @@ public final class Settings {
 	private static Supplier<Boolean> dependency = ALWAYS;
 
 	static {
-		add("theme.flavour", "Color theme",
+		add("theme.flavor", "Color theme",
 				"Sets the colors of this screen and of the markers in the world.",
-				Section.THEME, new Control.Choice<>(Flavour.class, Flavour::label, Flavour::preview),
-				Theme::flavour, Theme::flavour);
+				Section.THEME, new Control.Choice<>(Flavor.class, Flavor::label, Flavor::preview),
+				Theme::flavor, Theme::flavor);
 		choice("theme.accent", "Accent color", Section.THEME,
 				"Sets the color of the selected tab and of the sliders.",
 				Theme.Accent.class, Theme.Accent::label, Theme::accent, Theme::accent);
@@ -114,18 +114,18 @@ public final class Settings {
 						"Sets the width of the lines between the blazes.",
 						new Control.Real(0.5, 5.0, 0.1, Control.Format.PLAIN),
 						blaze::lineWidth, blaze::lineWidth);
-				boxColour("blaze.firstColour", "First color", Section.BLAZE,
+				boxColor("blaze.firstColor", "First color", Section.BLAZE,
 						"Sets the color of the blaze that you must kill now.",
-						blaze::firstColour, blaze::firstColour);
-				boxColour("blaze.secondColour", "Second color", Section.BLAZE,
+						blaze::firstColor, blaze::firstColor);
+				boxColor("blaze.secondColor", "Second color", Section.BLAZE,
 						"Sets the color of the blaze that you must kill next.",
-						blaze::secondColour, blaze::secondColour);
-				boxColour("blaze.thirdColour", "Third color", Section.BLAZE,
+						blaze::secondColor, blaze::secondColor);
+				boxColor("blaze.thirdColor", "Third color", Section.BLAZE,
 						"Sets the color of the blaze that you must kill third.",
-						blaze::thirdColour, blaze::thirdColour);
-				boxColour("blaze.otherColour", "Other color", Section.BLAZE,
+						blaze::thirdColor, blaze::thirdColor);
+				boxColor("blaze.otherColor", "Other color", Section.BLAZE,
 						"Sets the color of all the other blazes.",
-						blaze::otherColour, blaze::otherColour);
+						blaze::otherColor, blaze::otherColor);
 				choice("blaze.order", "Order", Section.BLAZE,
 						"Sets which blaze you kill first: the lowest health or the highest health. Auto uses the position of the chest to find the order.",
 						Blaze.Order.class, Blaze.Order::label, blaze::order, blaze::order);
@@ -148,8 +148,8 @@ public final class Settings {
 				flag("beams.tracer", "Line between pairs", Section.BEAMS,
 						"Shows a line between the two lanterns of each pair.",
 						beams::tracer, beams::tracer);
-				// The only opacity sliders outside a picker: the lantern colours are a fixed cycle,
-				// so there is no colour picker here to carry them.
+				// The only opacity sliders outside a picker: the lantern colors are a fixed cycle,
+				// so there is no color picker here to carry them.
 				real("beams.alpha", "Outline opacity", Section.BEAMS,
 						"Sets the opacity of the box outlines. You cannot change the pair colors, so this setting controls their opacity.",
 						new Control.Real(0.0, 1.0, 0.05, Control.Format.PERCENT),
@@ -171,9 +171,9 @@ public final class Settings {
 			choice("livid.style", "Box style", Section.LIVID,
 					"Sets the box type: filled, outline, or both.",
 					Style.class, Style::label, Livid::style, Livid::style);
-			boxColour("livid.boxColour", "Box color", Section.LIVID,
+			boxColor("livid.boxColor", "Box color", Section.LIVID,
 					"Sets the color of the box around the real Livid.",
-					Livid::boxColour, Livid::boxColour);
+					Livid::boxColor, Livid::boxColor);
 			flag("livid.announce", "Name it in chat", Section.LIVID,
 					"Shows the name of the real Livid in your chat. Other players cannot see this message.",
 					Livid::announce, Livid::announce);
@@ -207,11 +207,11 @@ public final class Settings {
 			flag("mobs.hiddenFels", "Box hidden Fels", Section.STAR_MOBS,
 					"Puts a box around each hidden Fels before it comes out. A hidden Fels does not show a star, so this setting finds it early.",
 					StarMobWatch::hiddenFels, StarMobWatch::hiddenFels);
-			kindColour("mobs.colour", MobKind.STARRED,
+			kindColor("mobs.color", MobKind.STARRED,
 					"Sets the box color for starred mobs that are not Fels or minibosses.");
-			kindColour("mobs.felsColour", MobKind.FELS,
+			kindColor("mobs.felsColor", MobKind.FELS,
 					"Sets the box color for all Fels, hidden or not hidden.");
-			kindColour("mobs.minibossColour", MobKind.MINIBOSS,
+			kindColor("mobs.minibossColor", MobKind.MINIBOSS,
 					"Sets the box color for Shadow Assassins, Lost Adventurers, Angry Archaeologists, and King Midas.");
 		});
 
@@ -288,7 +288,7 @@ public final class Settings {
 	}
 
 	// One registration helper per kind of entry. Not every one has a caller yet;
-	// they are here so the first slider or colour is one line above and no
+	// they are here so the first slider or color is one line above and no
 	// screen code, which is the whole point of the registry.
 	private static void flag(String key, String label, Section section, String blurb,
 			Supplier<Boolean> read, Consumer<Boolean> write) {
@@ -311,20 +311,20 @@ public final class Settings {
 		add(key, label, blurb, section, new Control.Choice<>(type, naming), read, write);
 	}
 
-	/** Every colour carries its own opacity, set on the slider in its picker. */
-	private static void colour(String key, String label, Section section, String blurb,
+	/** Every color carries its own opacity, set on the slider in its picker. */
+	private static void color(String key, String label, Section section, String blurb,
 			Supplier<Swatch> read, Consumer<Swatch> write) {
-		add(key, label, blurb, section, new Control.Colour(false), read, write);
+		add(key, label, blurb, section, new Control.Color(false), read, write);
 	}
 
-	/** A box's colour: its picker has an outline slider and a fill slider, both saved with it. */
-	private static void boxColour(String key, String label, Section section, String blurb,
+	/** A box's color: its picker has an outline slider and a fill slider, both saved with it. */
+	private static void boxColor(String key, String label, Section section, String blurb,
 			Supplier<Swatch> read, Consumer<Swatch> write) {
-		add(key, label, blurb, section, new Control.Colour(true), read, write);
+		add(key, label, blurb, section, new Control.Color(true), read, write);
 	}
 
-	private static void kindColour(String key, MobKind kind, String blurb) {
-		boxColour(key, kind.label() + " color", Section.STAR_MOBS, blurb, kind::colour, kind::colour);
+	private static void kindColor(String key, MobKind kind, String blurb) {
+		boxColor(key, kind.label() + " color", Section.STAR_MOBS, blurb, kind::color, kind::color);
 	}
 
 	/** A button. Start the label with the verb; the button shows the first word. */

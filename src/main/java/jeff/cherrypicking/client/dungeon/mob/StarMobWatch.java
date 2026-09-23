@@ -26,7 +26,7 @@ import net.minecraft.world.phys.AABB;
  *
  * <p>Built to the shape of coalroutegenerator's {@code glacite.CorpseWatch}.
  *
- * <p><b>The star is on a separate armour stand</b>, not on the mob. Hypixel
+ * <p><b>The star is on a separate armor stand</b>, not on the mob. Hypixel
  * names the stand {@code ✯ Zombie Lord 1.2M❤} and floats it above the mob.
  * The mob is usually the entity spawned just before the stand ({@code standId
  * - 1}, or {@code - 3} for a Withermancer); when that entity fails the checks,

@@ -12,9 +12,9 @@ import net.minecraft.world.phys.AABB;
  */
 public record RoomFrame(int anchorX, int anchorZ, Rotation rotation) {
 
-	/** The frame of the room centred on {@code (centreX, centreZ)}, facing {@code rotation}. */
-	public static RoomFrame at(int centreX, int centreZ, Rotation rotation) {
-		return new RoomFrame(centreX + rotation.dx(), centreZ + rotation.dz(), rotation);
+	/** The frame of the room centerd on {@code (centerX, centerZ)}, facing {@code rotation}. */
+	public static RoomFrame at(int centerX, int centerZ, Rotation rotation) {
+		return new RoomFrame(centerX + rotation.dx(), centerZ + rotation.dz(), rotation);
 	}
 
 	/** Rotate, then offset by the anchor. */

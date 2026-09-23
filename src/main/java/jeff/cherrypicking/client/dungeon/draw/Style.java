@@ -4,9 +4,9 @@ package jeff.cherrypicking.client.dungeon.draw;
  * How a box is drawn.
  *
  * <p><b>The edge and the fill have separate opacities</b>, and both belong to
- * the box's colour: its picker has an outline slider and a fill slider (see
+ * the box's color: its picker has an outline slider and a fill slider (see
  * {@link jeff.cherrypicking.client.theme.Swatch#fill()}). So a bright outline
- * around a nearly clear fill, or a solid block, is set per colour, without
+ * around a nearly clear fill, or a solid block, is set per color, without
  * either choice dragging the other with it (check S4-09).
  */
 public enum Style {

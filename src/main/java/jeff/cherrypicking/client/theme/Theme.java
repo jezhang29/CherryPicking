@@ -3,30 +3,30 @@ package jeff.cherrypicking.client.theme;
 import java.util.Locale;
 
 /**
- * The live theme: which flavour, which accent, and the lookups that turn a {@link Role} or a
+ * The live theme: which flavor, which accent, and the lookups that turn a {@link Role} or a
  * {@link Swatch} into an ARGB {@code int}.
  *
- * <p>This is the owner of the {@code theme.flavour} and {@code theme.accent} settings, so their
- * defaults live here. Nothing caches a resolved colour across frames: every caller resolves at
+ * <p>This is the owner of the {@code theme.flavor} and {@code theme.accent} settings, so their
+ * defaults live here. Nothing caches a resolved color across frames: every caller resolves at
  * draw time, which is what makes a change take effect on the next frame everywhere at once.
  */
 public final class Theme {
 	/** The default, because it is what this machine's editors are set to. */
-	private static volatile Flavour flavour = Flavour.LATTE;
+	private static volatile Flavor flavor = Flavor.LATTE;
 	/** Catppuccin's own default accent. */
 	private static volatile Accent accent = Accent.MAUVE;
 
 	private Theme() {
 	}
 
-	/** The colour a role takes in the live flavour and accent. */
+	/** The color a role takes in the live flavor and accent. */
 	public static int of(Role role) {
 		String name = role.paletteName() == null ? accent.paletteName() : role.paletteName();
 		return withAlpha(palette().of(name), role.alphaPercent());
 	}
 
 	/**
-	 * A {@link Swatch.Named} looked up in the live flavour, at its own opacity; a
+	 * A {@link Swatch.Named} looked up in the live flavor, at its own opacity; a
 	 * {@link Swatch.Literal} as it is. The palette is opaque, so the name's alpha replaces it.
 	 */
 	public static int resolve(Swatch swatch) {
@@ -36,23 +36,23 @@ public final class Theme {
 		};
 	}
 
-	/** The colour a box's inside takes in {@code swatch}: its colour at its own fill opacity. */
+	/** The color a box's inside takes in {@code swatch}: its color at its own fill opacity. */
 	public static int resolveFill(Swatch swatch) {
 		return swatch.fill() << 24 | resolve(swatch) & 0x00FFFFFF;
 	}
 
-	/** The live flavour's colours. */
+	/** The live flavor's colors. */
 	public static Palette palette() {
-		return Palettes.of(flavour);
+		return Palettes.of(flavor);
 	}
 
-	public static Flavour flavour() {
-		return flavour;
+	public static Flavor flavor() {
+		return flavor;
 	}
 
-	public static void flavour(Flavour chosen) {
+	public static void flavor(Flavor chosen) {
 		if (chosen != null) {
-			flavour = chosen;
+			flavor = chosen;
 		}
 	}
 

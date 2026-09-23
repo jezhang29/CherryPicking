@@ -39,9 +39,9 @@ public record Marks(List<Mark> marks) {
 		private Builder() {
 		}
 
-		/** A box in a colour setting's outline and fill. */
-		public Builder box(AABB box, Swatch colour, Style style) {
-			return box(box, Theme.resolve(colour), Theme.resolveFill(colour), style);
+		/** A box in a color setting's outline and fill. */
+		public Builder box(AABB box, Swatch color, Style style) {
+			return box(box, Theme.resolve(color), Theme.resolveFill(color), style);
 		}
 
 		/** Meshes the box now, so the render thread does not. */
@@ -51,14 +51,14 @@ public record Marks(List<Mark> marks) {
 		}
 
 		/**
-		 * A box around a moving entity, in a colour setting's outline and fill.
+		 * A box around a moving entity, in a color setting's outline and fill.
 		 *
 		 * @param lift how far the box's floor sits above the entity's feet; negative is below
 		 */
 		public Builder entityBox(int entityId, double inflateXZ, double lift, double height,
-				Swatch colour, Style style) {
-			marks.add(new Mark.EntityBox(entityId, inflateXZ, lift, height, Theme.resolve(colour),
-					Theme.resolveFill(colour), style));
+				Swatch color, Style style) {
+			marks.add(new Mark.EntityBox(entityId, inflateXZ, lift, height, Theme.resolve(color),
+					Theme.resolveFill(color), style));
 			return this;
 		}
 
@@ -78,7 +78,7 @@ public record Marks(List<Mark> marks) {
 		}
 
 		/**
-		 * @param text carries its own colour, in its style
+		 * @param text carries its own color, in its style
 		 * @param scale a multiplier on the size the renderer picks; 1 is that size
 		 */
 		public Builder label(Vec3 at, Component text, double scale) {

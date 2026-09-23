@@ -23,14 +23,14 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 /**
- * CherryPicking's settings screen, drawn in the live colour theme.
+ * CherryPicking's settings screen, drawn in the live color theme.
  *
  * <pre>
  * ┌──────────────────────────────────────────────────────────┐
  * │ CherryPicking                  ⌕ [ filter every tab… ]  │  header
  * ├────────────┬─────────────────────────────────────────────┤
  * │▍Appearance │ ┌ Theme ──────────┐ ┌ Screen ──────────┐    │
- * │  Puzzles   │ │ Flavour   Latte │ │ …                │    │  rail | card grid
+ * │  Puzzles   │ │ Flavor   Latte │ │ …                │    │  rail | card grid
  * │            │ └─────────────────┘ └──────────────────┘    │
  * ├────────────┴─────────────────────────────────────────────┤
  * │ 2 settings · 2 shown          [Reset tab] [Reset all] [Done] │  footer
@@ -318,7 +318,7 @@ public final class SettingsScreen extends Screen {
 					row != null && placed == under ? row.entry() : null, flashKey);
 		}
 		if (layout.placed().isEmpty()) {
-			Text.centred(graphics, font, search.active() ? "Nothing matches that search." : "Nothing here yet.",
+			Text.centerd(graphics, font, search.active() ? "Nothing matches that search." : "Nothing here yet.",
 					bodyX + bodyWidth / 2, bodyY + 12, Theme.of(Role.TEXT_DIM));
 		}
 		graphics.disableScissor();

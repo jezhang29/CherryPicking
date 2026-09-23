@@ -14,7 +14,7 @@ import jeff.cherrypicking.client.theme.Swatch;
  * silently goes missing.
  *
  * <p>Every kind is here even while the mod uses only some of them. They cost
- * nothing while unused, and they are what lets the first slider or colour
+ * nothing while unused, and they are what lets the first slider or color
  * arrive as a line in {@link Settings} and no screen code.
  *
  * <p>Only value kinds belong here. A button has no value, so it is an
@@ -45,7 +45,7 @@ public sealed interface Control<T> {
 	/**
 	 * One of the constants of an enum, picked from a dropdown.
 	 *
-	 * @param preview a few ARGB colours drawn beside each option in the dropdown, or none; this is
+	 * @param preview a few ARGB colors drawn beside each option in the dropdown, or none; this is
 	 *                how a theme shows what it looks like before it is picked
 	 */
 	record Choice<E extends Enum<E>>(Class<E> type, Function<E, String> label,
@@ -56,14 +56,14 @@ public sealed interface Control<T> {
 	}
 
 	/**
-	 * A colour, picked from the live flavour's palette, dragged from the shade square, or typed as
-	 * hex. Its popover carries the colour's own opacity slider, so a feature never needs a separate
+	 * A color, picked from the live flavor's palette, dragged from the shade square, or typed as
+	 * hex. Its popover carries the color's own opacity slider, so a feature never needs a separate
 	 * opacity setting beside it.
 	 *
-	 * @param fill true for a box colour: the popover then has a second slider, for how solid the
+	 * @param fill true for a box color: the popover then has a second slider, for how solid the
 	 *             box's inside is, apart from its outline
 	 */
-	record Colour(boolean fill) implements Control<Swatch> {
+	record Color(boolean fill) implements Control<Swatch> {
 	}
 
 	/** How a {@link Real} value is written out next to its slider. */

@@ -36,7 +36,7 @@ import net.minecraft.world.phys.Vec3;
 public final class MarkRenderer {
 	private static final int ORDER_LAST = Integer.MAX_VALUE;
 
-	/** How far in front of the eye a tracer starts, so it is not a dot at the centre of the view. */
+	/** How far in front of the eye a tracer starts, so it is not a dot at the center of the view. */
 	private static final double TRACER_START = 0.5;
 
 	/** Always, for the sources that draw through terrain whatever the settings say. */

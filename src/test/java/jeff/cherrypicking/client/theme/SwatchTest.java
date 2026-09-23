@@ -8,8 +8,8 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * A swatch's written form is what {@code config/cherrypicking.json} stores for every colour
- * setting. If a spelling a player already has on disk stops reading, their colour silently falls
+ * A swatch's written form is what {@code config/cherrypicking.json} stores for every color
+ * setting. If a spelling a player already has on disk stops reading, their color silently falls
  * back to the default, so each accepted spelling is pinned here with its expected value written out
  * by hand, not computed by the code under test.
  */
@@ -49,7 +49,7 @@ class SwatchTest {
 	}
 
 	@Test
-	void rejectsTextThatIsNoColour() {
+	void rejectsTextThatIsNoColor() {
 		for (String text : List.of("", "grean", "green@8", "green@zz", "#12345", "#1234567",
 				"#40a02g", "green/2", "green/zz", "@80")) {
 			assertEquals(Optional.empty(), Swatch.read(text), text);

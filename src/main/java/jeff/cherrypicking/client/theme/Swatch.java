@@ -5,26 +5,26 @@ import java.util.Optional;
 import java.util.OptionalInt;
 
 /**
- * A colour setting's value: either a palette name, which follows the flavour, or a literal ARGB,
+ * A color setting's value: either a palette name, which follows the flavor, or a literal ARGB,
  * which does not. Both carry their own opacity.
  *
- * <p>Every feature colour ships as a {@link Named}, so switching flavour re-tints every colour the
+ * <p>Every feature color ships as a {@link Named}, so switching flavor re-tints every color the
  * player has not overridden, with nothing saved and nothing reset. {@link Theme#resolve(Swatch)}
  * turns either kind into an {@code int} at read time.
  *
- * <p><b>Opacity belongs to the colour.</b> A {@link Named} keeps an alpha of its own rather than
+ * <p><b>Opacity belongs to the color.</b> A {@link Named} keeps an alpha of its own rather than
  * borrowing the palette's, so dragging the picker's opacity slider does not quietly turn a palette
- * colour into a literal one and cut it loose from the flavour.
+ * color into a literal one and cut it loose from the flavor.
  *
  * <p><b>So does the fill.</b> Every swatch also carries a {@link #fill()} opacity, apart from its
- * outline's, so each box colour decides for itself how solid its inside is (check S4-09). A
- * colour that is never used for a fill simply never reads it.
+ * outline's, so each box color decides for itself how solid its inside is (check S4-09). A
+ * color that is never used for a fill simply never reads it.
  */
 public sealed interface Swatch {
 	/** How solid a box's inside is when nobody has said otherwise: about 35%. */
 	int DEFAULT_FILL = 0x59;
 
-	/** A palette name and an opacity: the colour follows the flavour, the opacity does not. */
+	/** A palette name and an opacity: the color follows the flavor, the opacity does not. */
 	record Named(String name, int alpha, int fill) implements Swatch {
 		public Named {
 			alpha = Math.clamp(alpha, 0, 255);
@@ -63,15 +63,15 @@ public sealed interface Swatch {
 		return new Literal(argb);
 	}
 
-	/** This colour's opacity, {@code 0}-{@code 255}. It is the outline's opacity on a box. */
+	/** This color's opacity, {@code 0}-{@code 255}. It is the outline's opacity on a box. */
 	default int alpha() {
 		return Theme.resolve(this) >>> 24;
 	}
 
-	/** How solid a box's inside is in this colour, {@code 0}-{@code 255}. */
+	/** How solid a box's inside is in this color, {@code 0}-{@code 255}. */
 	int fill();
 
-	/** The same colour at a different opacity, keeping its kind and its fill. */
+	/** The same color at a different opacity, keeping its kind and its fill. */
 	default Swatch withAlpha(int alpha) {
 		return switch (this) {
 			case Named named -> new Named(named.name(), alpha, named.fill());
@@ -80,7 +80,7 @@ public sealed interface Swatch {
 		};
 	}
 
-	/** The same colour with a different fill opacity, keeping its kind and its outline. */
+	/** The same color with a different fill opacity, keeping its kind and its outline. */
 	default Swatch withFill(int fill) {
 		return switch (this) {
 			case Named named -> new Named(named.name(), named.alpha(), fill);
@@ -93,17 +93,17 @@ public sealed interface Swatch {
 	 * {@code "#aarrggbb"}; then {@code "/ff"} when the fill is not {@link #DEFAULT_FILL}.
 	 */
 	default String written() {
-		String colour = switch (this) {
+		String color = switch (this) {
 			case Named named -> named.alpha() == 0xFF
 					? named.name()
 					: String.format(Locale.ROOT, "%s@%02x", named.name(), named.alpha());
 			case Literal literal -> String.format(Locale.ROOT, "#%08x", literal.argb());
 		};
-		return fill() == DEFAULT_FILL ? colour : String.format(Locale.ROOT, "%s/%02x", colour, fill());
+		return fill() == DEFAULT_FILL ? color : String.format(Locale.ROOT, "%s/%02x", color, fill());
 	}
 
 	/**
-	 * True when {@code text} names its own fill, so a file saved before fills were per colour can
+	 * True when {@code text} names its own fill, so a file saved before fills were per color can
 	 * be told apart from one that chose the default.
 	 */
 	static boolean namesFill(String text) {
@@ -125,12 +125,12 @@ public sealed interface Swatch {
 			if (fill.isEmpty()) {
 				return Optional.empty();
 			}
-			return colour(trimmed.substring(0, slash)).map(swatch -> swatch.withFill(fill.getAsInt()));
+			return color(trimmed.substring(0, slash)).map(swatch -> swatch.withFill(fill.getAsInt()));
 		}
-		return colour(trimmed);
+		return color(trimmed);
 	}
 
-	private static Optional<Swatch> colour(String trimmed) {
+	private static Optional<Swatch> color(String trimmed) {
 		int at = trimmed.lastIndexOf('@');
 		if (at > 0) {
 			String name = trimmed.substring(0, at);
@@ -147,7 +147,7 @@ public sealed interface Swatch {
 	}
 
 	/**
-	 * Six hex digits as an opaque colour, or eight as {@code AARRGGBB}. The {@code #} is optional.
+	 * Six hex digits as an opaque color, or eight as {@code AARRGGBB}. The {@code #} is optional.
 	 *
 	 * @return empty for anything else
 	 */

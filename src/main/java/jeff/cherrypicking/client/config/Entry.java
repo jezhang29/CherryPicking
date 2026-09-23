@@ -23,7 +23,7 @@ public sealed interface Entry permits Setting, Action {
 
 	/**
 	 * False while the feature this belongs to is switched off elsewhere. The row is then drawn
-	 * greyed out and ignores clicks.
+	 * grayed out and ignores clicks.
 	 */
 	boolean available();
 }

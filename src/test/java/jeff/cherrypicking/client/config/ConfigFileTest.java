@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * What a player relies on from {@code config/cherrypicking.json}: their choices survive a restart,
  * a hand-edited or damaged file cannot push a value past what the screen allows, and a file from
- * before per-colour fills keeps its boxes looking the same.
+ * before per-color fills keeps its boxes looking the same.
  *
  * <p>Settings are global, so every test starts and ends from the shipped defaults.
  */
@@ -51,7 +51,7 @@ class ConfigFileTest {
 		set("blaze.lines", 7);
 		set("beams.alpha", 0.4);
 		set("livid.style", Style.OUTLINE);
-		set("livid.boxColour", new Swatch.Named("red", 0x80, 0x20));
+		set("livid.boxColor", new Swatch.Named("red", 0x80, 0x20));
 
 		ConfigFile.save(file);
 		Settings.resetAll();
@@ -61,7 +61,7 @@ class ConfigFileTest {
 		assertEquals(7, value("blaze.lines"));
 		assertEquals(0.4, value("beams.alpha"));
 		assertEquals(Style.OUTLINE, value("livid.style"));
-		assertEquals(new Swatch.Named("red", 0x80, 0x20), value("livid.boxColour"));
+		assertEquals(new Swatch.Named("red", 0x80, 0x20), value("livid.boxColor"));
 	}
 
 	@Test
@@ -112,9 +112,9 @@ class ConfigFileTest {
 	@Test
 	void valuesOfTheWrongTypeKeepTheDefault() throws IOException {
 		write("{\"blaze.nextLine\": \"yes\", \"blaze.lines\": \"7\", \"livid.style\": 3,"
-				+ " \"livid.boxColour\": 5, \"beams.alpha\": NaN, \"blaze.lineWidth\": Infinity}");
+				+ " \"livid.boxColor\": 5, \"beams.alpha\": NaN, \"blaze.lineWidth\": Infinity}");
 
-		for (String key : new String[] {"blaze.nextLine", "blaze.lines", "livid.style", "livid.boxColour",
+		for (String key : new String[] {"blaze.nextLine", "blaze.lines", "livid.style", "livid.boxColor",
 				"beams.alpha", "blaze.lineWidth"}) {
 			assertEquals(fallback(key), value(key), key);
 		}
@@ -139,13 +139,13 @@ class ConfigFileTest {
 	}
 
 	@Test
-	void anOldSharedFillBecomesEachBoxColoursFill() throws IOException {
-		write("{\"boxes.fillOpacity\": 0.5, \"livid.boxColour\": \"red@80\","
-				+ " \"blaze.firstColour\": \"red@80/20\"}");
+	void anOldSharedFillBecomesEachBoxColorsFill() throws IOException {
+		write("{\"boxes.fillOpacity\": 0.5, \"livid.boxColor\": \"red@80\","
+				+ " \"blaze.firstColor\": \"red@80/20\"}");
 
-		// 0x80 outline at half share: fill 0x40. A colour that names its own fill keeps it.
-		assertEquals(new Swatch.Named("red", 0x80, 0x40), value("livid.boxColour"));
-		assertEquals(new Swatch.Named("red", 0x80, 0x20), value("blaze.firstColour"));
+		// 0x80 outline at half share: fill 0x40. A color that names its own fill keeps it.
+		assertEquals(new Swatch.Named("red", 0x80, 0x40), value("livid.boxColor"));
+		assertEquals(new Swatch.Named("red", 0x80, 0x20), value("blaze.firstColor"));
 	}
 
 	@Test
@@ -164,7 +164,7 @@ class ConfigFileTest {
 
 	@Test
 	void theNextSaveDropsTheOldSharedFill() throws IOException {
-		write("{\"boxes.fillOpacity\": 0.5, \"livid.boxColour\": \"red@80\"}");
+		write("{\"boxes.fillOpacity\": 0.5, \"livid.boxColor\": \"red@80\"}");
 		ConfigFile.save(file);
 
 		String saved = Files.readString(file);

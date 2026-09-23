@@ -25,9 +25,9 @@ final class Text {
 		draw(graphics, font, text, right - font.width(text), y, argb);
 	}
 
-	/** Draws {@code text} centred on {@code centre}. */
-	static void centred(GuiGraphicsExtractor graphics, Font font, String text, int centre, int y, int argb) {
-		draw(graphics, font, text, centre - font.width(text) / 2, y, argb);
+	/** Draws {@code text} centerd on {@code center}. */
+	static void centerd(GuiGraphicsExtractor graphics, Font font, String text, int center, int y, int argb) {
+		draw(graphics, font, text, center - font.width(text) / 2, y, argb);
 	}
 
 	/** @return {@code text}, or as much of it as fits followed by an ellipsis */

@@ -117,7 +117,7 @@ final class Dropdown<E extends Enum<E>> implements Popover {
 				graphics.fill(cellX, top, cellX + PREVIEW, top + PREVIEW, preview.get(i));
 			}
 			if (!preview.isEmpty()) {
-				// One edge round the whole strip, so a background colour close to the panel's own
+				// One edge round the whole strip, so a background color close to the panel's own
 				// still reads as a square.
 				Chrome.edge(graphics, left - 1, top - 1, right - left + 2, PREVIEW + 2, Role.BORDER);
 			}
@@ -152,7 +152,7 @@ final class Dropdown<E extends Enum<E>> implements Popover {
 		}
 	}
 
-	/** Up and Down step to the neighbouring option and apply it at once; the list stays open. */
+	/** Up and Down step to the neighboring option and apply it at once; the list stays open. */
 	@Override
 	public boolean key(KeyEvent event) {
 		int step = switch (event.key()) {
