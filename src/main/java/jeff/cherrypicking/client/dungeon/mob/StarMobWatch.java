@@ -2,6 +2,7 @@ package jeff.cherrypicking.client.dungeon.mob;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -42,7 +43,9 @@ import net.minecraft.world.phys.AABB;
  * in the next room is behind a wall you are not fighting through yet.
  *
  * <p><b>Only starred.</b> A mob is boxed only through a stand whose name has
- * {@code ✯}, so an unstarred Fels is never boxed that way.
+ * {@code ✯} and a word, so an unstarred Fels is never boxed that way. The word
+ * matters: a crit from an arrow or from Overload makes a damage tag such as
+ * {@code ✯1,234✯}, which floats next to the mob it hit and has no name.
  *
  * <p><b>Hidden Fels.</b> A Fels waits invisible until a player comes close. It
  * has no name stand yet, so a starred Fels and an unstarred one cannot be told
@@ -59,6 +62,9 @@ public final class StarMobWatch {
 	private static final int MAX_MOBS = 64;
 
 	private static final String STAR = "✯";
+
+	/** Two letters in a row, as in a name. A damage tag has only digits and marks. */
+	private static final Pattern WORD = Pattern.compile("\\p{L}{2,}");
 
 	// Where the mob may be, relative to its stand. The stand floats just above the
 	// mob's head, so the mob is below it and nearly under it.
@@ -130,7 +136,7 @@ public final class StarMobWatch {
 			}
 			Component custom = stand.getCustomName();
 			String text = custom == null ? "" : custom.getString();
-			if (!text.contains(STAR)) {
+			if (!namesStarredMob(text)) {
 				continue;
 			}
 
@@ -161,6 +167,11 @@ public final class StarMobWatch {
 		if (found.size() != was) {
 			CherryPicking.LOGGER.debug("Starred mobs: {} in this room.", found.size());
 		}
+	}
+
+	/** {@code ✯ Zombie Lord 1.2M❤} names a starred mob; the damage tag {@code ✯1,234✯} does not. */
+	static boolean namesStarredMob(String text) {
+		return text.contains(STAR) && WORD.matcher(text).find();
 	}
 
 	/** The mob a star stand names: the id guess first, then the nearest mob under the stand. */
