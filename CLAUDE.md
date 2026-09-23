@@ -31,7 +31,8 @@ client and joining Hypixel, which is the user's job. Live state lives under
 
 **In-game checks live in `docs/in-game-checks.md`.** Read it before every review: a `FAIL` or
 `PARTLY` verdict there is a confirmed bug. Add the review's in-game checks to it, in the format and
-by the rules at the top of that file. Never edit the player's verdicts or notes.
+by the rules at the top of that file. Never edit the player's verdicts or notes. Checks marked
+`PASS` move, word for word, to `docs/in-game-checks-passed.md`; read the notes there too.
 
 ## Hard constraint: display-only
 

@@ -15,8 +15,10 @@ chat. Features announce locally through `client.dungeon.Chat`; it does not send 
   testing. `AGENTS.md` is a symlink to it, so Codex reads the same file.
 - [dungeon-layer.md](dungeon-layer.md) preserves detailed design rationale and upstream research.
   Its original feature list and stages mix implemented and future work. It is not a release list.
-- [in-game-checks.md](in-game-checks.md) owns player verdicts. Historical checks remain intact even
-  when a subsequent change replaces the behavior they describe.
+- [in-game-checks.md](in-game-checks.md) owns player verdicts for checks still to do.
+  [in-game-checks-passed.md](in-game-checks-passed.md) holds the checks marked `PASS`, moved word
+  for word. Historical checks remain intact even when a subsequent change replaces the behavior
+  they describe.
 - [future-work.md](future-work.md) covers miniboss detection without nametags.
 - [friend-cosmetics-plan.md](friend-cosmetics-plan.md) is a separate, unimplemented proposal.
 
