@@ -54,7 +54,8 @@ public final class DungeonState {
 	private static boolean inSkyBlock;
 	private static boolean sidebarSaysCatacombs;
 	private static boolean locrawSaysCatacombs;
-	private static ClientLevel lastLevel;
+	/** Compared by identity only. */
+	private static Object lastLevel;
 	private static boolean warnedBoss;
 
 	private DungeonState() {
@@ -68,39 +69,38 @@ public final class DungeonState {
 			return;
 		}
 
-		// A warp builds a new ClientLevel. Checked every tick, not every poll, so a
-		// reply from the old level cannot slip in between the warp and the check.
-		if (level != lastLevel) {
-			lastLevel = level;
-			SharedLocraw.invalidate();
-			locrawSaysCatacombs = false;
-		}
-
+		world(level);
 		if (++tickCounter >= POLL_INTERVAL_TICKS) {
 			tickCounter = 0;
-			poll(client, level);
+			read(ScoreboardReader.lines(level), ScoreboardReader.title(level), SharedLocraw.mode());
 		}
+		gate(client.player);
+	}
 
-		boolean nowIn = forced || (inSkyBlock
-				&& (locrawSaysCatacombs || sidebarSaysCatacombs));
-		boolean nowBoss = nowIn && pastBossDoor(client.player);
-		if (nowIn != inCatacombs || nowBoss != inBoss) {
-			inCatacombs = nowIn;
-			inBoss = nowBoss;
-			generation++;
-			CherryPicking.LOGGER.info("Catacombs: {}{}{}", nowIn ? "in" : "out",
-					floor < 0 ? "" : " " + (master ? "M" : "F") + floor,
-					nowBoss ? ", in the boss room" : "");
+	/**
+	 * A warp builds a new ClientLevel, and a new level is a new run: nothing
+	 * found in the last one holds, even on the same floor. So it starts from
+	 * nothing, and the next read of the sidebar decides again. Checked every
+	 * tick, not every poll, so a reply from the old level cannot slip in between
+	 * the warp and the check.
+	 */
+	static void world(Object level) {
+		if (level != lastLevel) {
+			if (inCatacombs) {
+				CherryPicking.LOGGER.info("Catacombs: new level, starting over");
+			}
+			clear();
+			lastLevel = level;
+			SharedLocraw.invalidate();
 		}
 	}
 
-	/** Once a second: re-read the sidebar and the shared locraw reply. */
-	private static void poll(Minecraft client, ClientLevel level) {
-		List<String> lines = ScoreboardReader.lines(level);
+	/** Once a second: the sidebar, its title and the shared locraw reply's {@code mode}. */
+	static void read(List<String> lines, String title, String locrawMode) {
 		sidebar = lines;
-		inSkyBlock = ScoreboardReader.title(level).toUpperCase().contains("SKYBLOCK");
+		inSkyBlock = title.toUpperCase().contains("SKYBLOCK");
 
-		locrawSaysCatacombs = DUNGEON_MODE.equals(SharedLocraw.mode());
+		locrawSaysCatacombs = DUNGEON_MODE.equals(locrawMode);
 
 		int nowFloor = -1;
 		boolean nowMaster = false;
@@ -124,6 +124,21 @@ public final class DungeonState {
 			master = nowMaster;
 			warnedBoss = false;
 			generation++;
+		}
+	}
+
+	/** Every tick: in or out, and past the boss door or not. */
+	static void gate(LocalPlayer player) {
+		boolean nowIn = forced || (inSkyBlock
+				&& (locrawSaysCatacombs || sidebarSaysCatacombs));
+		boolean nowBoss = nowIn && pastBossDoor(player);
+		if (nowIn != inCatacombs || nowBoss != inBoss) {
+			inCatacombs = nowIn;
+			inBoss = nowBoss;
+			generation++;
+			CherryPicking.LOGGER.info("Catacombs: {}{}{}", nowIn ? "in" : "out",
+					floor < 0 ? "" : " " + (master ? "M" : "F") + floor,
+					nowBoss ? ", in the boss room" : "");
 		}
 	}
 
@@ -196,7 +211,8 @@ public final class DungeonState {
 	}
 
 	/**
-	 * Bumped on every crossing, in or out, and on a floor change. Everything
+	 * Bumped on every crossing, in or out, on a floor change and on a new level
+	 * during a run. Everything
 	 * downstream watches this number rather than the booleans: a change means
 	 * "throw away what you found".
 	 */
