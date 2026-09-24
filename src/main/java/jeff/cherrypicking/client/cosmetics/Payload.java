@@ -97,12 +97,14 @@ record Payload(Map<String, Cosmetic> looks, Map<EquipmentSlot, String> equipped)
 
 		Map<String, Cosmetic> looks = new HashMap<>();
 		int dropped = 0;
+		int droppedFields = 0;
 		if (root.get("looks") instanceof JsonObject entries) {
 			for (Map.Entry<String, JsonElement> entry : entries.entrySet()) {
 				Optional<Cosmetic> look = looks.size() < MAX_LOOKS && ITEM_UUID.matcher(entry.getKey()).matches()
 						&& entry.getValue() instanceof JsonObject fields ? cosmetic(fields) : Optional.empty();
 				if (look.isPresent()) {
 					looks.put(entry.getKey(), look.get());
+					droppedFields += given(entry.getValue().getAsJsonObject()) - kept(look.get());
 				} else {
 					dropped++;
 				}
@@ -119,8 +121,9 @@ record Payload(Map<String, Cosmetic> looks, Map<EquipmentSlot, String> equipped)
 			}
 		}
 
-		if (dropped > 0) {
-			CherryPicking.LOGGER.warn("Friend looks: dropped {} bad looks from {}.", dropped, source);
+		if (dropped > 0 || droppedFields > 0) {
+			CherryPicking.LOGGER.warn("Friend looks: dropped {} bad looks and {} bad fields from {}.", dropped,
+					droppedFields, source);
 		}
 		return Optional.of(new Payload(Map.copyOf(looks), Map.copyOf(equipped)));
 	}
@@ -169,6 +172,17 @@ record Payload(Map<String, Cosmetic> looks, Map<EquipmentSlot, String> equipped)
 		return out.toString();
 	}
 
+	private static final List<String> FIELDS = List.of("dye", "trim", "helmetTexture", "glint");
+
+	private static int given(JsonObject fields) {
+		return (int) FIELDS.stream().filter(fields::has).count();
+	}
+
+	private static int kept(Cosmetic look) {
+		return (look.dye().isPresent() ? 1 : 0) + (look.trim().isPresent() ? 1 : 0)
+				+ (look.helmetTexture().isPresent() ? 1 : 0) + (look.glint().isPresent() ? 1 : 0);
+	}
+
 	/** One look; empty without a valid id. A field that fails its check is left out. */
 	private static Optional<Cosmetic> cosmetic(JsonObject fields) {
 		if (!(fields.get("id") instanceof JsonPrimitive id) || !id.isString()
@@ -204,15 +218,20 @@ record Payload(Map<String, Cosmetic> looks, Map<EquipmentSlot, String> equipped)
 	 * Mojang's skin server is allowed, so a friend's data cannot make this client fetch other URLs.
 	 */
 	static boolean skinOnMojang(String texture) {
+		return skinUrl(texture).filter(url -> url.startsWith("http://textures.minecraft.net/")
+				|| url.startsWith("https://textures.minecraft.net/")).isPresent();
+	}
+
+	/** The skin URL in a texture property; empty if the property is malformed. */
+	static Optional<String> skinUrl(String texture) {
 		try {
 			String json = new String(Base64.getDecoder().decode(texture), StandardCharsets.UTF_8);
-			String url = JsonParser.parseString(json).getAsJsonObject()
-					.getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString();
-			return url.startsWith("http://textures.minecraft.net/") || url.startsWith("https://textures.minecraft.net/");
+			return Optional.of(JsonParser.parseString(json).getAsJsonObject()
+					.getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString());
 		} catch (RuntimeException malformed) {
 			// Bad base64, bad JSON, a missing key or a key of the wrong type: each throws a
 			// different unchecked exception, and each means the same thing here.
-			return false;
+			return Optional.empty();
 		}
 	}
 }
