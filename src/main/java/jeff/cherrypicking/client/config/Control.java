@@ -66,6 +66,14 @@ public sealed interface Control<T> {
 	record Color(boolean fill) implements Control<Swatch> {
 	}
 
+	/**
+	 * A line of text, typed in a popover. Enter or a click outside keeps it; Escape drops the edit.
+	 *
+	 * @param maxLength the most characters it holds; a longer saved value is cut to this
+	 */
+	record Text(int maxLength) implements Control<String> {
+	}
+
 	/** How a {@link Real} value is written out next to its slider. */
 	enum Format {
 		/** Two decimals, no unit. */

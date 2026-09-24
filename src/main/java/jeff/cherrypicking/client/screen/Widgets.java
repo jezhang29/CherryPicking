@@ -56,6 +56,10 @@ final class Widgets {
 	private static final int SWATCH_HEIGHT = 8;
 	private static final int SWATCH_CHECKER = 4;
 	private static final int CHIP_HEIGHT = 10;
+	/** The widest a text's chip grows; longer text is cut with an ellipsis. */
+	private static final int TEXT_CHIP = 90;
+	/** A text chip's content when the text is empty. */
+	private static final String EMPTY_TEXT = "none";
 	/** After a choice's value, to say a click opens a list. */
 	private static final String ARROW = " ▾";
 
@@ -82,6 +86,10 @@ final class Widgets {
 
 		/** A choice's chip was pressed; open its dropdown under {@code chip}. */
 		record Choose(Setting<?> setting, Control.Choice<?> choice, Chrome.Rect chip) implements Hit {
+		}
+
+		/** A text's chip was pressed; open its text field under {@code chip}. */
+		record Type(Setting<String> setting, Control.Text text, Chrome.Rect chip) implements Hit {
 		}
 	}
 
@@ -154,6 +162,14 @@ final class Widgets {
 				Chrome.edge(graphics, swatch.x() - 1, swatch.y() - 1, swatch.width() + 2, swatch.height() + 2,
 						Role.BORDER);
 				yield swatch.x() - 1;
+			}
+			case Control.Text ignored -> {
+				Chrome.Rect chip = textChip(font, (Setting<String>) setting, x, y, width);
+				String value = ((Setting<String>) setting).value();
+				Chrome.box(graphics, chip.x(), chip.y(), chip.width(), chip.height(), Role.CARD, Role.BORDER);
+				Text.draw(graphics, font, value.isEmpty() ? EMPTY_TEXT : Text.fit(font, value, chip.width() - 6),
+						chip.x() + 3, textY(font, y), Theme.of(value.isEmpty() ? Role.TEXT_FAINT : text));
+				yield chip.x();
 			}
 		};
 	}
@@ -242,6 +258,12 @@ final class Widgets {
 			case Control.Color ignored -> button == 0
 					? new Hit.Pick((Setting<Swatch>) setting, swatch(x, y, width))
 					: null;
+			case Control.Text text -> {
+				Chrome.Rect chip = textChip(font, (Setting<String>) setting, x, y, width);
+				yield button == 0 && chip.contains(mouseX, mouseY)
+						? new Hit.Type((Setting<String>) setting, text, chip)
+						: null;
+			}
 		};
 	}
 
@@ -329,6 +351,13 @@ final class Widgets {
 	private static Chrome.Rect chip(Font font, Setting<?> setting, Control.Choice<?> choice, int x, int y,
 			int width) {
 		int chipWidth = font.width(written(setting, choice) + ARROW) + 6;
+		return new Chrome.Rect(x + width - PAD - chipWidth, y + (row() - CHIP_HEIGHT) / 2, chipWidth, CHIP_HEIGHT);
+	}
+
+	/** A text's chip: as wide as its text, up to {@link #TEXT_CHIP}, right-aligned in the row. */
+	private static Chrome.Rect textChip(Font font, Setting<String> setting, int x, int y, int width) {
+		String value = setting.value();
+		int chipWidth = Math.min(TEXT_CHIP, font.width(value.isEmpty() ? EMPTY_TEXT : value) + 6);
 		return new Chrome.Rect(x + width - PAD - chipWidth, y + (row() - CHIP_HEIGHT) / 2, chipWidth, CHIP_HEIGHT);
 	}
 

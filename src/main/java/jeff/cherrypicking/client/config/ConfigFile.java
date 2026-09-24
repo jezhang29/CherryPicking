@@ -160,6 +160,7 @@ public final class ConfigFile {
 			case Number number -> out.addProperty(setting.key(), number);
 			case Enum<?> constant -> out.addProperty(setting.key(), constant.name());
 			case Swatch swatch -> out.addProperty(setting.key(), swatch.written());
+			case String text -> out.addProperty(setting.key(), text);
 			default -> CherryPicking.LOGGER.warn("Setting {} holds an unsaveable {}.",
 					setting.key(), value == null ? "null" : value.getClass().getSimpleName());
 		}
@@ -195,6 +196,11 @@ public final class ConfigFile {
 							() -> CherryPicking.LOGGER.warn(
 									"Saved color for {} is neither a palette name nor a hex; keeping the default.",
 									setting.key()));
+				}
+				case Control.Text text -> {
+					String saved = shaped(value, JsonPrimitive::isString).getAsString();
+					((Setting<String>) setting).value(saved.length() <= text.maxLength()
+							? saved : saved.substring(0, text.maxLength()));
 				}
 			}
 		} catch (RuntimeException wrongShape) {

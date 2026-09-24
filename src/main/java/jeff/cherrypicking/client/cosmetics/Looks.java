@@ -65,7 +65,7 @@ public final class Looks {
 	 * first checks.
 	 */
 	public static ItemStack styled(LivingEntity entity, EquipmentSlot slot, ItemStack stack) {
-		if (FriendLooks.isEmpty() || stack.isEmpty() || !(entity instanceof Player)
+		if (!Cosmetics.enabled() || FriendLooks.isEmpty() || stack.isEmpty() || !(entity instanceof Player)
 				|| !DungeonState.inSkyBlock()) {
 			return stack;
 		}

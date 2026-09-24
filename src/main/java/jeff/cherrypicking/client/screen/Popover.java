@@ -7,11 +7,11 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 
 /**
- * What floats over the screen while one row is being edited: the color picker or a choice's
- * dropdown. The screen holds at most one, sends it every click, drag, wheel and key first, and
+ * What floats over the screen while one row is being edited: the color picker, a choice's
+ * dropdown or a text field. The screen holds at most one, sends it every click, drag, wheel and key first, and
  * draws it last.
  */
-sealed interface Popover permits Swatches, Dropdown {
+sealed interface Popover permits Swatches, Dropdown, Typing {
 	void draw(GuiGraphicsExtractor graphics, Font font, int mouseX, int mouseY);
 
 	/**

@@ -9,6 +9,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import jeff.cherrypicking.client.CleanExit;
+import jeff.cherrypicking.client.cosmetics.Cosmetics;
+import jeff.cherrypicking.client.cosmetics.Publisher;
+import jeff.cherrypicking.client.cosmetics.RelayClient;
 import jeff.cherrypicking.client.dungeon.DungeonState;
 import jeff.cherrypicking.client.dungeon.boss.Livid;
 import jeff.cherrypicking.client.dungeon.boss.LividTitle;
@@ -215,6 +218,18 @@ public final class Settings {
 					"Sets the box color for Shadow Assassins, Lost Adventurers, Angry Archaeologists, and King Midas.");
 		});
 
+		flag("friendCosmetics.enabled", "Show friends' cosmetics", Section.FRIEND_COSMETICS,
+				"Shows your friends' Skyblocker armor looks, and shares yours with them. This uses the relay on the internet.",
+				Cosmetics::enabled, Cosmetics::enabled);
+		when(Cosmetics::enabled, () -> {
+			flag("friendCosmetics.share", "Share my cosmetics", Section.FRIEND_COSMETICS,
+					"Sends your own Skyblocker armor looks to the relay, so your friends can see them.",
+					Publisher::share, Publisher::share);
+			text("friendCosmetics.relayUrl", "Relay address", Section.FRIEND_COSMETICS,
+					"The web address of the relay that passes looks between you and your friends. It must start with https://.",
+					new Control.Text(200), RelayClient::url, RelayClient::url);
+		});
+
 		flag("quitting.cleanExit", "Quit cleanly", Section.QUITTING,
 				"Closes the game immediately when you quit. If this setting is off, a different mod can stop the game from closing and cause a crash.",
 				CleanExit::enabled, CleanExit::enabled);
@@ -342,6 +357,11 @@ public final class Settings {
 
 	private static void kindColor(String key, MobKind kind, String blurb) {
 		boxColor(key, kind.label() + " color", Section.STAR_MOBS, blurb, kind::color, kind::color);
+	}
+
+	private static void text(String key, String label, Section section, String blurb,
+			Control.Text control, Supplier<String> read, Consumer<String> write) {
+		add(key, label, blurb, section, control, read, write);
 	}
 
 	/** A button. Start the label with the verb; the button shows the first word. */

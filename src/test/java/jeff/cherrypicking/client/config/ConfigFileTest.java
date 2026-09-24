@@ -52,6 +52,7 @@ class ConfigFileTest {
 		set("beams.alpha", 0.4);
 		set("livid.style", Style.OUTLINE);
 		set("livid.boxColor", new Swatch.Named("red", 0x80, 0x20));
+		set("friendCosmetics.relayUrl", "https://relay.example.com");
 
 		ConfigFile.save(file);
 		Settings.resetAll();
@@ -62,6 +63,7 @@ class ConfigFileTest {
 		assertEquals(0.4, value("beams.alpha"));
 		assertEquals(Style.OUTLINE, value("livid.style"));
 		assertEquals(new Swatch.Named("red", 0x80, 0x20), value("livid.boxColor"));
+		assertEquals("https://relay.example.com", value("friendCosmetics.relayUrl"));
 	}
 
 	@Test
@@ -110,12 +112,20 @@ class ConfigFileTest {
 	}
 
 	@Test
+	void textLongerThanItsFieldIsCut() throws IOException {
+		write("{\"friendCosmetics.relayUrl\": \"https://" + "a".repeat(300) + "\"}");
+
+		assertEquals("https://" + "a".repeat(192), value("friendCosmetics.relayUrl"));
+	}
+
+	@Test
 	void valuesOfTheWrongTypeKeepTheDefault() throws IOException {
 		write("{\"blaze.nextLine\": \"yes\", \"blaze.lines\": \"7\", \"livid.style\": 3,"
-				+ " \"livid.boxColor\": 5, \"beams.alpha\": NaN, \"blaze.lineWidth\": Infinity}");
+				+ " \"livid.boxColor\": 5, \"beams.alpha\": NaN, \"blaze.lineWidth\": Infinity,"
+				+ " \"friendCosmetics.relayUrl\": 5}");
 
 		for (String key : new String[] {"blaze.nextLine", "blaze.lines", "livid.style", "livid.boxColor",
-				"beams.alpha", "blaze.lineWidth"}) {
+				"beams.alpha", "blaze.lineWidth", "friendCosmetics.relayUrl"}) {
 			assertEquals(fallback(key), value(key), key);
 		}
 	}

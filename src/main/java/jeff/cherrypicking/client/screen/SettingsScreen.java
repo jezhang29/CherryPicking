@@ -539,6 +539,8 @@ public final class SettingsScreen extends Screen {
 			case Widgets.Hit.Choose choose -> openPopover(
 					Dropdown.of(font, choose.setting(), choose.choice(), choose.chip(), popoverBounds(),
 							ConfigFile::save));
+			case Widgets.Hit.Type type -> openPopover(
+					new Typing(font, type.setting(), type.text(), type.chip(), popoverBounds(), ConfigFile::save));
 		}
 	}
 

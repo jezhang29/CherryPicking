@@ -22,6 +22,7 @@ public enum Section {
 	LIVID("Boss", "Livid"),
 	LIVID_TITLE("Boss", "Livid title"),
 	STAR_MOBS("Mobs", "Starred mobs"),
+	FRIEND_COSMETICS("Cosmetics", "Friends"),
 	QUITTING("Advanced", "Quitting"),
 	DEVELOPER("Advanced", "Developer");
 

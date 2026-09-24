@@ -55,6 +55,7 @@ public final class TestLooks {
 		FriendLooks.replace(Map.of(player.getUUID(), payload.get()));
 		Chat.note("Looks", "Loaded " + payload.get().looks().size() + " looks for "
 				+ player.getGameProfile().name() + ". Press F5 to see them."
-				+ (DungeonState.inSkyBlock() ? "" : " Looks show only on SkyBlock."));
+				+ (DungeonState.inSkyBlock() ? "" : " Looks show only on SkyBlock.")
+				+ (Cosmetics.enabled() ? "" : " Turn on Cosmetics → Friends → Show friends' cosmetics to see them."));
 	}
 }

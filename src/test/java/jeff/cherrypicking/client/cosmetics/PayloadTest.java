@@ -2,10 +2,15 @@ package jeff.cherrypicking.client.cosmetics;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.TreeMap;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import net.minecraft.world.entity.EquipmentSlot;
 
@@ -132,6 +137,53 @@ class PayloadTest {
 	}
 
 	@Test
+	void writtenLooksCarryTheirIdAndDecodeBack() {
+		Map<String, JsonObject> looks = new TreeMap<>(Map.of(
+				RED_WISE, fields("{\"dye\": 16711680, \"glint\": true}"),
+				GREEN_BOOTS, fields("{\"dye\": 65280}")));
+		String json = Payload.write(looks,
+				Map.of(RED_WISE, "WISE_WITHER_CHESTPLATE", GREEN_BOOTS, "WISE_WITHER_BOOTS"),
+				Map.of(EquipmentSlot.CHEST, RED_WISE));
+
+		assertEquals(JsonParser.parseString("""
+				{"format": 1,
+				 "looks": {
+				   "%s": {"id": "WISE_WITHER_CHESTPLATE", "dye": 16711680, "glint": true},
+				   "%s": {"id": "WISE_WITHER_BOOTS", "dye": 65280}},
+				 "equipped": {"chest": "%s"}}
+				""".formatted(RED_WISE, GREEN_BOOTS, RED_WISE)), JsonParser.parseString(json));
+		Payload payload = Payload.decode(json, "test").orElseThrow();
+		assertEquals(Optional.of(new Cosmetic("WISE_WITHER_CHESTPLATE", OptionalInt.of(0xFF0000), Optional.empty(),
+				Optional.empty(), Optional.of(true))), payload.look(EquipmentSlot.CHEST, "WISE_WITHER_CHESTPLATE"));
+	}
+
+	@Test
+	void aLookWhoseIdWasNeverSeenIsNotShared() {
+		String json = Payload.write(Map.of(RED_WISE, fields("{\"dye\": 1}")), Map.of(), Map.of());
+
+		assertEquals(JsonParser.parseString("{\"format\": 1, \"looks\": {}, \"equipped\": {}}"),
+				JsonParser.parseString(json));
+	}
+
+	@Test
+	void tooManyLooksShareOnlyTheWornOnes() {
+		Map<String, JsonObject> looks = new TreeMap<>();
+		Map<String, String> ids = new HashMap<>();
+		String bigTexture = "x".repeat(1_000);
+		for (int i = 0; i < 100; i++) {
+			String uuid = String.format("00000000-0000-0000-0000-%012d", i);
+			looks.put(uuid, fields("{\"helmetTexture\": \"" + bigTexture + "\"}"));
+			ids.put(uuid, "HELMET_" + i);
+		}
+		String worn = "00000000-0000-0000-0000-000000000007";
+
+		String json = Payload.write(looks, ids, Map.of(EquipmentSlot.HEAD, worn));
+
+		JsonObject shared = JsonParser.parseString(json).getAsJsonObject().getAsJsonObject("looks");
+		assertEquals(Set.of(worn), shared.keySet());
+	}
+
+		@Test
 	void onlyMojangSkinsAreAllowed() {
 		assertTrue(Payload.skinOnMojang(texture("http://textures.minecraft.net/texture/abc123")));
 		assertTrue(Payload.skinOnMojang(texture("https://textures.minecraft.net/texture/abc123")));
@@ -139,6 +191,10 @@ class PayloadTest {
 		assertFalse(Payload.skinOnMojang(texture("https://example.com/texture/abc")));
 		assertFalse(Payload.skinOnMojang("%%% not base64 %%%"));
 		assertFalse(Payload.skinOnMojang(Base64.getEncoder().encodeToString("{}".getBytes(StandardCharsets.UTF_8))));
+	}
+
+	private static JsonObject fields(String json) {
+		return JsonParser.parseString(json).getAsJsonObject();
 	}
 
 	private static Cosmetic look(String id, int dye) {

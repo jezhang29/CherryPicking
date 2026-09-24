@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import com.google.gson.JsonElement;
@@ -26,7 +27,8 @@ import net.minecraft.world.entity.EquipmentSlot;
  *
  * <p>A payload comes from another player's client, so {@link #decode} is the edge: it applies every
  * check in section 9 of that plan. A look or field that fails a check is dropped, and the count is
- * logged. Everything past {@code decode} trusts the values.
+ * logged. Everything past {@code decode} trusts the values. {@link #write} makes the document this
+ * client publishes.
  *
  * @param looks    item uuid to look
  * @param equipped the item uuid worn in each armor slot
@@ -121,6 +123,50 @@ record Payload(Map<String, Cosmetic> looks, Map<EquipmentSlot, String> equipped)
 			CherryPicking.LOGGER.warn("Friend looks: dropped {} bad looks from {}.", dropped, source);
 		}
 		return Optional.of(new Payload(Map.copyOf(looks), Map.copyOf(equipped)));
+	}
+
+	/**
+	 * The document to publish.
+	 *
+	 * @param looks    item uuid to look fields, as {@link SkyblockerFile#looks} gives them
+	 * @param ids      item uuid to SkyBlock id, for the items this client has seen
+	 * @param equipped the uuid worn in each armor slot
+	 * @return JSON. A look with no known id is left out, because no other client could match it.
+	 *         If the document is too large, only the worn looks are kept, with a warning.
+	 */
+	static String write(Map<String, JsonObject> looks, Map<String, String> ids, Map<EquipmentSlot, String> equipped) {
+		String json = document(looks, ids, equipped, uuid -> true);
+		if (json.length() > MAX_CHARS) {
+			CherryPicking.LOGGER.warn("Friend looks: your looks are larger than {} characters; sharing only the worn ones.",
+					MAX_CHARS);
+			json = document(looks, ids, equipped, equipped::containsValue);
+		}
+		return json;
+	}
+
+	private static String document(Map<String, JsonObject> looks, Map<String, String> ids,
+			Map<EquipmentSlot, String> equipped, Predicate<String> keep) {
+		JsonObject out = new JsonObject();
+		out.addProperty("format", FORMAT);
+		JsonObject lookOut = new JsonObject();
+		looks.forEach((uuid, fields) -> {
+			String id = ids.get(uuid);
+			if (id != null && keep.test(uuid) && lookOut.size() < MAX_LOOKS) {
+				JsonObject look = new JsonObject();
+				look.addProperty("id", id);
+				fields.entrySet().forEach(field -> look.add(field.getKey(), field.getValue()));
+				lookOut.add(uuid, look);
+			}
+		});
+		out.add("looks", lookOut);
+		JsonObject worn = new JsonObject();
+		for (EquipmentSlot slot : ARMOR) {
+			if (equipped.containsKey(slot)) {
+				worn.addProperty(slot.getName(), equipped.get(slot));
+			}
+		}
+		out.add("equipped", worn);
+		return out.toString();
 	}
 
 	/** One look; empty without a valid id. A field that fails its check is left out. */
