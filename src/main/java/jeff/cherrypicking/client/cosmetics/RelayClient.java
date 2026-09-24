@@ -7,50 +7,45 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.Signature;
 import java.time.Duration;
+import java.util.Base64;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Function;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
-import com.mojang.authlib.exceptions.AuthenticationException;
 
 import jeff.cherrypicking.CherryPicking;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.User;
+import net.minecraft.world.entity.player.ProfileKeyPair;
+import net.minecraft.world.entity.player.ProfilePublicKey;
 
 /**
  * Talks to the relay, the Cloudflare Worker in section 5 of docs/friend-cosmetics-plan.md.
  *
- * <p><b>Login</b> uses the same check as joining a Minecraft server: the relay makes a
- * {@code serverId}, this client tells Mojang it joins that id, and the relay asks Mojang to confirm.
- * The access token goes only to Mojang. The relay's token is kept in memory only.
+ * <p><b>Login</b> signs the relay's challenge with the game's chat key, which Mojang certifies for
+ * this player (see {@link #loginBody}). The relay's token is kept in memory only.
  *
  * <p><b>Failures</b> are logged once, not once per try; the log says again when the relay works.
- * After a network failure the next try waits a minute, after a session failure ten minutes. If the
+ * After a network failure the next try waits a minute, after a key failure ten minutes. If the
  * relay does not allow this player, it stops until {@link #forget}.
  *
- * <p>Requests run on the HTTP client's threads and the login call on its own thread, never on the
- * client thread.
+ * <p>Requests run on the HTTP client's threads, never on the client thread.
  */
 public final class RelayClient {
 	private static final Duration TIMEOUT = Duration.ofSeconds(10);
 	private static final long NETWORK_RETRY_MS = 60_000;
-	private static final long SESSION_RETRY_MS = 600_000;
+	private static final long KEY_RETRY_MS = 600_000;
 
 	private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(TIMEOUT).build();
-	/** {@code joinServer} blocks, so it gets a thread of its own. */
-	private static final ExecutorService LOGIN = Executors.newSingleThreadExecutor(task -> {
-		Thread thread = new Thread(task, "CherryPicking relay login");
-		thread.setDaemon(true);
-		return thread;
-	});
 
 	/** The {@code friendCosmetics.relayUrl} setting. The default is the relay this mod ships with. */
 	private static volatile String url = "https://cherry-relay.jezhang-25.workers.dev";
@@ -118,36 +113,61 @@ public final class RelayClient {
 	}
 
 	private static CompletableFuture<String> login() {
-		User user = Minecraft.getInstance().getUser();
+		Minecraft minecraft = Minecraft.getInstance();
+		User user = minecraft.getUser();
 		String name = user.getName();
+		String uuid = user.getProfileId().toString().replace("-", "");
+		CompletableFuture<Optional<ProfileKeyPair>> keys = minecraft.getProfileKeyPairManager().prepareKeyPair();
 		return send("GET", "/challenge?name=" + URLEncoder.encode(name, StandardCharsets.UTF_8), null, null)
-				.thenApplyAsync(reply -> {
-					JsonObject challenge = object(reply, "challenge");
-					String serverId = challenge.get("serverId").getAsString();
-					long ts = challenge.get("ts").getAsLong();
-					try {
-						Minecraft.getInstance().services().sessionService()
-								.joinServer(user.getProfileId(), user.getAccessToken(), serverId);
-					} catch (AuthenticationException rejected) {
-						throw new Failure("Mojang did not accept your session (" + rejected.getMessage()
-								+ "). Trying again in 10 minutes.", SESSION_RETRY_MS);
-					}
-					JsonObject body = new JsonObject();
-					body.addProperty("name", name);
-					body.addProperty("ts", ts);
-					return body.toString();
-				}, LOGIN)
+				.thenCombine(keys, (reply, keyPair) -> loginBody(name, uuid, object(reply, "challenge"),
+						keyPair.orElseThrow(() -> new Failure("the game has no Mojang chat key, so the relay"
+								+ " cannot check who you are. An offline account, or an account with chat turned"
+								+ " off, has none. Trying again in 10 minutes.", KEY_RETRY_MS))))
 				.thenCompose(body -> send("POST", "/login", null, body))
 				.thenApply(reply -> {
 					if (reply.status() == 403 && reply.body().contains("not allowed")) {
-						throw new Failure("your UUID " + user.getProfileId().toString().replace("-", "")
-								+ " is not in the relay's ALLOWED list. Add it, then reconnect.", Long.MAX_VALUE);
+						throw new Failure("your UUID " + uuid + " is not in the relay's ALLOWED list."
+								+ " Add it, then reconnect.", Long.MAX_VALUE);
+					}
+					if (reply.status() == 403) {
+						throw new Failure("the relay did not accept your game key: " + reply.body()
+								+ ". Trying again in 10 minutes.", KEY_RETRY_MS);
 					}
 					String fresh = object(reply, "login").get("token").getAsString();
 					token = fresh;
 					CherryPicking.LOGGER.info("Relay: logged in as {}.", name);
 					return fresh;
 				});
+	}
+
+	/**
+	 * The login request (relay/worker.js, {@code login}). The game's chat key signs the relay's
+	 * challenge, and Mojang's certificate for that key says whose it is. So the relay checks who you
+	 * are with no call to Mojang, which refuses requests from Cloudflare. No token or password is in
+	 * it. The prefix keeps this signature from ever being a valid chat signature.
+	 */
+	static String loginBody(String name, String uuid, JsonObject challenge, ProfileKeyPair keys) {
+		String serverId = challenge.get("serverId").getAsString();
+		ProfilePublicKey.Data certificate = keys.publicKey().data();
+		byte[] signature;
+		try {
+			Signature signer = Signature.getInstance("SHA256withRSA");
+			signer.initSign(keys.privateKey());
+			signer.update(("cherry-relay-login:" + serverId).getBytes(StandardCharsets.UTF_8));
+			signature = signer.sign();
+		} catch (GeneralSecurityException failed) {
+			throw new Failure("could not sign the relay's challenge (" + failed + ").", KEY_RETRY_MS);
+		}
+		Base64.Encoder base64 = Base64.getEncoder();
+		JsonObject body = new JsonObject();
+		body.addProperty("name", name);
+		body.addProperty("ts", challenge.get("ts").getAsLong());
+		body.addProperty("uuid", uuid);
+		body.addProperty("expiresAt", certificate.expiresAt().toEpochMilli());
+		body.addProperty("publicKey", base64.encodeToString(certificate.key().getEncoded()));
+		body.addProperty("keySignature", base64.encodeToString(certificate.keySignature()));
+		body.addProperty("signature", base64.encodeToString(signature));
+		return body.toString();
 	}
 
 	private static CompletableFuture<Reply> send(String method, String path, String bearer, String body) {
