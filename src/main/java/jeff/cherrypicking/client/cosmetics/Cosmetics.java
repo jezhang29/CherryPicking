@@ -17,19 +17,21 @@ public final class Cosmetics {
 
 	public static void register() {
 		ClientTickEvents.END_CLIENT_TICK.register(Publisher::tick);
+		ClientTickEvents.END_CLIENT_TICK.register(Poller::tick);
 	}
 
 	public static boolean enabled() {
 		return enabled;
 	}
 
-	/** Turning it off clears the looks drawn and the relay login, and stops sharing. */
+	/** Turning it off clears the looks drawn and the relay login, and stops sharing and fetching. */
 	public static void enabled(boolean value) {
 		enabled = value;
 		if (!value) {
 			FriendLooks.replace(Map.of());
 			RelayClient.forget();
 			Publisher.reset();
+			Poller.reset();
 		}
 	}
 }

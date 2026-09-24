@@ -11,6 +11,7 @@ import java.security.GeneralSecurityException;
 import java.security.Signature;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -84,13 +85,41 @@ public final class RelayClient {
 
 	/** Sends your payload. Completes normally only when the relay stored it. */
 	static CompletableFuture<Void> publish(String json, int looks) {
-		return withToken(bearer -> send("PUT", "/cosmetics", bearer, json))
+		return withToken(bearer -> send("PUT", "/cosmetics", bearer, json, null))
 				.thenAccept(reply -> {
 					if (reply.status() != 204) {
 						throw new Failure("the relay did not take your looks: HTTP " + reply.status()
 								+ " " + reply.body(), NETWORK_RETRY_MS);
 					}
-					working("Relay: shared {} of your looks.", looks);
+					working();
+					CherryPicking.LOGGER.info("Relay: shared {} of your looks.", looks);
+				})
+				.whenComplete((ignored, error) -> {
+					if (error != null) {
+						failed(error);
+					}
+				});
+	}
+
+	/** The relay's reply to a fetch: its {@code ETag}, and the JSON body with the players. */
+	record Fetched(String etag, JsonObject body) {
+	}
+
+	/**
+	 * Fetches the named players' payloads. Empty when the relay answers that nothing changed since
+	 * {@code etag}, the {@code ETag} of the last fetch, or null for none.
+	 */
+	static CompletableFuture<Optional<Fetched>> fetch(List<String> names, String etag) {
+		String path = "/cosmetics?names=" + URLEncoder.encode(String.join(",", names), StandardCharsets.UTF_8);
+		return withToken(bearer -> send("GET", path, bearer, null, etag))
+				.thenApply(reply -> {
+					if (reply.status() == 304) {
+						working();
+						return Optional.<Fetched>empty();
+					}
+					JsonObject body = object(reply, "fetching friends' looks");
+					working();
+					return Optional.of(new Fetched(reply.etag(), body));
 				})
 				.whenComplete((ignored, error) -> {
 					if (error != null) {
@@ -118,12 +147,12 @@ public final class RelayClient {
 		String name = user.getName();
 		String uuid = user.getProfileId().toString().replace("-", "");
 		CompletableFuture<Optional<ProfileKeyPair>> keys = minecraft.getProfileKeyPairManager().prepareKeyPair();
-		return send("GET", "/challenge?name=" + URLEncoder.encode(name, StandardCharsets.UTF_8), null, null)
+		return send("GET", "/challenge?name=" + URLEncoder.encode(name, StandardCharsets.UTF_8), null, null, null)
 				.thenCombine(keys, (reply, keyPair) -> loginBody(name, uuid, object(reply, "challenge"),
 						keyPair.orElseThrow(() -> new Failure("the game has no Mojang chat key, so the relay"
 								+ " cannot check who you are. An offline account, or an account with chat turned"
 								+ " off, has none. Trying again in 10 minutes.", KEY_RETRY_MS))))
-				.thenCompose(body -> send("POST", "/login", null, body))
+				.thenCompose(body -> send("POST", "/login", null, body, null))
 				.thenApply(reply -> {
 					if (reply.status() == 403 && reply.body().contains("not allowed")) {
 						throw new Failure("your UUID " + uuid + " is not in the relay's ALLOWED list."
@@ -170,7 +199,8 @@ public final class RelayClient {
 		return body.toString();
 	}
 
-	private static CompletableFuture<Reply> send(String method, String path, String bearer, String body) {
+	private static CompletableFuture<Reply> send(String method, String path, String bearer, String body,
+			String etag) {
 		HttpRequest.Builder request;
 		try {
 			request = HttpRequest.newBuilder(base().resolve(path)).timeout(TIMEOUT);
@@ -184,10 +214,14 @@ public final class RelayClient {
 		if (body != null) {
 			request.header("Content-Type", "application/json");
 		}
+		if (etag != null) {
+			request.header("If-None-Match", etag);
+		}
 		request.method(method, body == null ? HttpRequest.BodyPublishers.noBody()
 				: HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8));
 		return HTTP.sendAsync(request.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
-				.thenApply(response -> new Reply(response.statusCode(), response.body()));
+				.thenApply(response -> new Reply(response.statusCode(), response.body(),
+						response.headers().firstValue("ETag").orElse(null)));
 	}
 
 	/** The relay address with no trailing slash. Only https, so the token never travels in clear. */
@@ -243,15 +277,15 @@ public final class RelayClient {
 		}
 	}
 
-	private static void working(String message, Object argument) {
+	/** A request worked: if the last one failed, the log says the relay works again. */
+	private static void working() {
 		if (!lastProblem.isEmpty()) {
 			lastProblem = "";
 			CherryPicking.LOGGER.info("Relay: working again.");
 		}
-		CherryPicking.LOGGER.info(message, argument);
 	}
 
-	private record Reply(int status, String body) {
+	private record Reply(int status, String body, String etag) {
 	}
 
 	/** A failure with a known cause and wait. {@code Long.MAX_VALUE} waits until {@link #forget}. */

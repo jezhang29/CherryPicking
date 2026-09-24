@@ -10,6 +10,7 @@ import java.util.function.Supplier;
 
 import jeff.cherrypicking.client.CleanExit;
 import jeff.cherrypicking.client.cosmetics.Cosmetics;
+import jeff.cherrypicking.client.cosmetics.Poller;
 import jeff.cherrypicking.client.cosmetics.Publisher;
 import jeff.cherrypicking.client.cosmetics.RelayClient;
 import jeff.cherrypicking.client.dungeon.DungeonState;
@@ -222,6 +223,12 @@ public final class Settings {
 				"Shows your friends' Skyblocker armor looks, and shares yours with them. This uses the relay on the internet.",
 				Cosmetics::enabled, Cosmetics::enabled);
 		when(Cosmetics::enabled, () -> {
+			text("friendCosmetics.friends", "Friends", Section.FRIEND_COSMETICS,
+					"The Minecraft names of the friends whose armor looks you want to see, separated by commas. Add your own name to see your shared looks on yourself.",
+					new Control.Text(200), Poller::friends, Poller::friends);
+			whole("friendCosmetics.pollSeconds", "Check every", Section.FRIEND_COSMETICS,
+					"How often to get your friends' latest looks from the relay.",
+					new Control.Whole(30, 600, 30, "s"), Poller::pollSeconds, Poller::pollSeconds);
 			flag("friendCosmetics.share", "Share my cosmetics", Section.FRIEND_COSMETICS,
 					"Sends your own Skyblocker armor looks to the relay, so your friends can see them.",
 					Publisher::share, Publisher::share);
