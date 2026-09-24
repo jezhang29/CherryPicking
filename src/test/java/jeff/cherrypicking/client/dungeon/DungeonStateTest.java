@@ -65,6 +65,23 @@ class DungeonStateTest {
 	}
 
 	@Test
+	void theSidebarTitleSaysSkyBlockWithoutLocraw() {
+		DungeonState.read(HUB, "SKYBLOCK CO-OP", "");
+		assertTrue(DungeonState.inSkyBlock());
+
+		DungeonState.read(List.of("Players: 12"), "BED WARS", "");
+		assertFalse(DungeonState.inSkyBlock());
+	}
+
+	@Test
+	void aNewLevelIsNotSkyBlockUntilItsSidebarArrives() {
+		DungeonState.read(HUB, TITLE, "");
+
+		DungeonState.world(new Object());
+		assertFalse(DungeonState.inSkyBlock());
+	}
+
+	@Test
 	void theSameLevelKeepsTheRun() {
 		Object level = new Object();
 		inF5(level);

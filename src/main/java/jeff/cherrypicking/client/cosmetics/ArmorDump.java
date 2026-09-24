@@ -16,16 +16,15 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.DyedItemColor;
 
 /**
  * {@code /cherry debug armor <player>}: prints what Hypixel sends about one nearby player's armor.
  *
- * <p>Friend cosmetics look up a friend's armor by its SkyBlock UUID. That works only if Hypixel
- * sends the UUID on other players' armor, not only on your own. This command shows it, and the
- * answer picks Plan A or Plan B in {@code docs/friend-cosmetics-plan.md}. It also shows whether the
- * armor carries the vanilla dye component, which that plan's dye hook depends on.
+ * <p>Friend cosmetics depend on what Hypixel sends about other players' armor. This command shows
+ * it: the answer, no uuid and only the SkyBlock id, picked Plan B in
+ * {@code docs/friend-cosmetics-plan.md}. It also shows the vanilla dye, and, for a player with friend
+ * looks, which look matches each piece.
  *
  * <p>It only reads. The full tags also go to the log, where they are easier to copy than from chat.
  * Client thread only.
@@ -52,8 +51,9 @@ public final class ArmorDump {
 		}
 		AbstractClientPlayer player = found.get();
 		Chat.note("Armor", "Armor of " + player.getGameProfile().name() + ":");
+		Payload payload = FriendLooks.of(player.getUUID());
 		for (EquipmentSlot slot : SLOTS) {
-			print(slot, player.getItemBySlot(slot));
+			print(slot, player.getItemBySlot(slot), payload);
 		}
 	}
 
@@ -67,19 +67,35 @@ public final class ArmorDump {
 				.findFirst();
 	}
 
-	private static void print(EquipmentSlot slot, ItemStack stack) {
+	private static void print(EquipmentSlot slot, ItemStack stack, Payload payload) {
 		String label = slot.getName().toUpperCase();
 		if (stack.isEmpty()) {
 			Chat.note("Armor", label + ": empty");
 			return;
 		}
-		CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
-		String uuid = ItemUuid.of(tag);
+		CompoundTag tag = SkyblockItem.tag(stack);
+		String uuid = SkyblockItem.uuid(tag);
 		DyedItemColor dye = stack.get(DataComponents.DYED_COLOR);
+		String look = payload == null ? ""
+				: ", look " + payload.look(slot, SkyblockItem.id(tag)).map(ArmorDump::describe).orElse("NONE");
 		Chat.note("Armor", label + ": " + BuiltInRegistries.ITEM.getKey(stack.getItem())
 				+ ", uuid " + (uuid.isEmpty() ? "NONE" : uuid)
-				+ ", dye " + (dye == null ? "NONE" : String.format("#%06x", dye.rgb() & 0xFFFFFF)));
+				+ ", dye " + (dye == null ? "NONE" : hex(dye.rgb())) + look);
 		CherryPicking.LOGGER.info("Armor: {} custom_data {}", label, tag);
 		Chat.say(Component.literal(tag.toString()).withStyle(ChatFormatting.DARK_GRAY));
+	}
+
+	/** The look's fields, short enough for chat: the texture shows only as present. */
+	private static String describe(Cosmetic look) {
+		StringBuilder text = new StringBuilder(look.id());
+		look.dye().ifPresent(rgb -> text.append(" dye ").append(hex(rgb)));
+		look.trim().ifPresent(trim -> text.append(" trim ").append(trim.material()).append('/').append(trim.pattern()));
+		look.helmetTexture().ifPresent(texture -> text.append(" skin"));
+		look.glint().ifPresent(glint -> text.append(" glint ").append(glint));
+		return text.toString();
+	}
+
+	private static String hex(int rgb) {
+		return String.format("#%06x", rgb & 0xFFFFFF);
 	}
 }

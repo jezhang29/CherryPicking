@@ -6,6 +6,7 @@ import com.mojang.brigadier.context.CommandContext;
 
 import jeff.cherrypicking.client.config.ScreenOpener;
 import jeff.cherrypicking.client.cosmetics.ArmorDump;
+import jeff.cherrypicking.client.cosmetics.TestLooks;
 
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -40,7 +41,9 @@ public final class CherryCommand {
 								.then(ClientCommands.argument("player", StringArgumentType.word())
 										.suggests((context, builder) ->
 												SharedSuggestionProvider.suggest(ArmorDump.names(), builder))
-										.executes(CherryCommand::armor)))));
+										.executes(CherryCommand::armor)))
+						.then(ClientCommands.literal("looks")
+								.executes(CherryCommand::looks))));
 	}
 
 	private static int config(CommandContext<FabricClientCommandSource> context) {
@@ -52,6 +55,11 @@ public final class CherryCommand {
 
 	private static int armor(CommandContext<FabricClientCommandSource> context) {
 		ArmorDump.print(StringArgumentType.getString(context, "player"));
+		return 1;
+	}
+
+	private static int looks(CommandContext<FabricClientCommandSource> context) {
+		TestLooks.load();
 		return 1;
 	}
 }

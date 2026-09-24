@@ -39,6 +39,7 @@ public final class DungeonState {
 	private static final int POLL_INTERVAL_TICKS = 20;
 
 	// Published. Volatile: read by the render thread and by every feature.
+	private static volatile boolean inSkyBlock;
 	private static volatile boolean inCatacombs;
 	private static volatile int floor = -1;
 	private static volatile boolean master;
@@ -51,7 +52,6 @@ public final class DungeonState {
 
 	// Poll state. Client thread only.
 	private static int tickCounter;
-	private static boolean inSkyBlock;
 	private static boolean sidebarSaysCatacombs;
 	private static boolean locrawSaysCatacombs;
 	/** Compared by identity only. */
@@ -182,6 +182,14 @@ public final class DungeonState {
 		locrawSaysCatacombs = false;
 		sidebar = List.of();
 		lastLevel = null;
+	}
+
+	/**
+	 * The sidebar title says SkyBlock, as last read. The sidebar alone decides, so this holds
+	 * without coalroutegenerator. False for up to a second after a new level.
+	 */
+	public static boolean inSkyBlock() {
+		return inSkyBlock;
 	}
 
 	/** In the Catacombs at all, or forced. */
