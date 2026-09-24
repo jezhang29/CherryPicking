@@ -95,7 +95,7 @@ publishing {
 
 /**
  * Copies the built mod jar into the real Minecraft mods folder, because that folder is how this
- * mod is tested - a dev client has no Hypixel to connect to. `build` finalises with it, so a fresh
+ * mod is tested - a dev client has no Hypixel to connect to. `build` finalizes with it, so a fresh
  * jar is in place without a second command.
  *
  * <p>It is a no-op when the mods folder does not exist, which is what keeps it off CI and off any
