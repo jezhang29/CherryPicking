@@ -103,8 +103,19 @@ public final class Looks {
 	 * so changing the cached copy is safe.
 	 */
 	private static void animate(Styled styled) {
-		styled.look().flatMap(Cosmetic::animatedDye).ifPresent(dye -> styled.result().set(DataComponents.DYED_COLOR,
-				new DyedItemColor(AnimatedDyes.color(dye, Util.getMillis() / 1000.0))));
+		if (styled.look().isEmpty()) {
+			return;
+		}
+		Cosmetic look = styled.look().get();
+		ItemStack copy = styled.result();
+		long now = Util.getMillis();
+		look.animatedDye().ifPresent(dye -> copy.set(DataComponents.DYED_COLOR,
+				new DyedItemColor(AnimatedDyes.color(dye, now / 1000.0))));
+		// Skyblocker draws a plain helmet skin before an animated one.
+		if (copy.is(Items.PLAYER_HEAD) && look.helmetTexture().isEmpty()) {
+			look.animatedHelmet().flatMap(id -> AnimatedHeads.texture(id, now)).map(Looks::profile)
+					.ifPresent(profile -> copy.set(DataComponents.PROFILE, profile));
+		}
 	}
 
 	private static ItemStack apply(Cosmetic look, ItemStack stack) {

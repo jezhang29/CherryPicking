@@ -177,7 +177,7 @@ record Payload(Map<String, Cosmetic> looks, Map<EquipmentSlot, String> equipped)
 	}
 
 	private static final List<String> FIELDS = List.of("dye", "animatedDye", "trim", "helmetTexture", "glint",
-			"armorModel");
+			"armorModel", "animatedHelmet");
 
 	private static int given(JsonObject fields) {
 		return (int) FIELDS.stream().filter(fields::has).count();
@@ -186,7 +186,8 @@ record Payload(Map<String, Cosmetic> looks, Map<EquipmentSlot, String> equipped)
 	private static int kept(Cosmetic look) {
 		return (look.dye().isPresent() ? 1 : 0) + (look.animatedDye().isPresent() ? 1 : 0)
 				+ (look.trim().isPresent() ? 1 : 0) + (look.helmetTexture().isPresent() ? 1 : 0)
-				+ (look.glint().isPresent() ? 1 : 0) + (look.armorModel().isPresent() ? 1 : 0);
+				+ (look.glint().isPresent() ? 1 : 0) + (look.armorModel().isPresent() ? 1 : 0)
+				+ (look.animatedHelmet().isPresent() ? 1 : 0);
 	}
 
 	/** One look; empty without a valid id. A field that fails its check is left out. */
@@ -219,8 +220,13 @@ record Payload(Map<String, Cosmetic> looks, Map<EquipmentSlot, String> equipped)
 		Optional<Identifier> armorModel = fields.get("armorModel") instanceof JsonPrimitive value && value.isString()
 				? Optional.ofNullable(Identifier.tryParse(value.getAsString())) : Optional.empty();
 
+		// Only a name here; whether Skyblocker's list has it is checked when drawing.
+		Optional<String> animatedHelmet = fields.get("animatedHelmet") instanceof JsonPrimitive value
+				&& value.isString() && SKYBLOCK_ID.matcher(value.getAsString()).matches()
+				? Optional.of(value.getAsString()) : Optional.empty();
+
 		return Optional.of(new Cosmetic(id.getAsString(), dye, animatedDye(fields.get("animatedDye")), trim, texture,
-				glint, armorModel));
+				glint, armorModel, animatedHelmet));
 	}
 
 	/**

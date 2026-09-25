@@ -129,6 +129,7 @@ public final class ArmorDump {
 				.append(Payload.skinUrl(texture).map(ArmorDump::hash).orElse("?")));
 		look.glint().ifPresent(glint -> text.append(" glint ").append(glint));
 		look.armorModel().ifPresent(model -> text.append(" model ").append(model));
+		look.animatedHelmet().ifPresent(head -> text.append(" animated head ").append(head));
 		return text.toString();
 	}
 

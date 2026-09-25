@@ -16,9 +16,12 @@ import net.minecraft.resources.Identifier;
  * @param helmetTexture a base64 texture property whose skin is on textures.minecraft.net
  * @param armorModel    an equipment asset, such as {@code minecraft:netherite}, drawn in place of the
  *                      armor's own; whether the client has it is checked when drawing
+ * @param animatedHelmet the id of an animated head in Skyblocker's list, drawn when there is no
+ *                      {@code helmetTexture}, as Skyblocker does
  */
 record Cosmetic(String id, OptionalInt dye, Optional<AnimatedDye> animatedDye, Optional<Trim> trim,
-		Optional<String> helmetTexture, Optional<Boolean> glint, Optional<Identifier> armorModel) {
+		Optional<String> helmetTexture, Optional<Boolean> glint, Optional<Identifier> armorModel,
+		Optional<String> animatedHelmet) {
 	/** Names in the trim registries. Whether the client has them is checked when drawing. */
 	record Trim(Identifier material, Identifier pattern) {
 	}

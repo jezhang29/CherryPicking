@@ -33,7 +33,8 @@ final class SkyblockerFile {
 			"customArmorTrims", "trim",
 			"customHelmetTextures", "helmetTexture",
 			"customGlint", "glint",
-			"customArmorModel", "armorModel");
+			"customArmorModel", "armorModel",
+			"customAnimatedHelmetTextures", "animatedHelmet");
 
 	private SkyblockerFile() {
 	}
