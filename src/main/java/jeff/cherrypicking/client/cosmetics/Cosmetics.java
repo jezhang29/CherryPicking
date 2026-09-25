@@ -2,6 +2,8 @@ package jeff.cherrypicking.client.cosmetics;
 
 import java.util.Map;
 
+import jeff.cherrypicking.CherryPicking;
+
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 
 /**
@@ -35,5 +37,16 @@ public final class Cosmetics {
 			Publisher.reset();
 			Poller.reset();
 		}
+	}
+
+	/**
+	 * The "Reconnect relay" button: logs in again, opens a new live link and gets friends' looks now.
+	 * It also ends the stop after the relay refused this player. Client thread.
+	 */
+	public static void reconnect() {
+		CherryPicking.LOGGER.info("Relay: reconnecting.");
+		RelayClient.forget();
+		LiveLink.close();
+		Poller.reset();
 	}
 }

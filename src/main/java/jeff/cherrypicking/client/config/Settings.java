@@ -10,6 +10,7 @@ import java.util.function.Supplier;
 
 import jeff.cherrypicking.client.CleanExit;
 import jeff.cherrypicking.client.cosmetics.Cosmetics;
+import jeff.cherrypicking.client.cosmetics.Looks;
 import jeff.cherrypicking.client.cosmetics.Poller;
 import jeff.cherrypicking.client.cosmetics.Publisher;
 import jeff.cherrypicking.client.cosmetics.RelayClient;
@@ -236,6 +237,21 @@ public final class Settings {
 			text("friendCosmetics.relayUrl", "Relay address", Section.FRIEND_COSMETICS,
 					"The web address of the relay that passes looks between you and your friends. It must start with https://.",
 					new Control.Text(200), RelayClient::url, RelayClient::url);
+			action("friendCosmetics.reconnect", "Reconnect relay", Section.FRIEND_COSMETICS,
+					"Logs in to the relay again and gets your friends' looks now. Click this button after the relay had a problem.",
+					Cosmetics::reconnect);
+			flag("friendCosmetics.dyes", "Dyes", Section.FRIEND_COSMETICS,
+					"Shows your friends' custom armor dyes, also the animated dyes.",
+					Looks::dyes, Looks::dyes);
+			flag("friendCosmetics.trims", "Trims", Section.FRIEND_COSMETICS,
+					"Shows your friends' custom armor trims.",
+					Looks::trims, Looks::trims);
+			flag("friendCosmetics.heads", "Helmet skins", Section.FRIEND_COSMETICS,
+					"Shows your friends' custom helmet skins, also the animated helmets.",
+					Looks::heads, Looks::heads);
+			flag("friendCosmetics.models", "Armor models", Section.FRIEND_COSMETICS,
+					"Shows your friends' custom armor models. A model from a resource pack shows only if you have the same pack.",
+					Looks::models, Looks::models);
 		});
 
 		flag("quitting.cleanExit", "Quit cleanly", Section.QUITTING,

@@ -66,7 +66,54 @@ public final class Looks {
 	/** Where the game loads equipment assets from, as {@code EquipmentAssetManager} does. */
 	private static final FileToIdConverter EQUIPMENT_FILES = FileToIdConverter.json("equipment");
 
+	// Which kinds of look to draw. Each setter drops the cached copies, so a change shows at once on
+	// armor already worn.
+	/** The {@code friendCosmetics.dyes} setting: static and animated dyes. */
+	private static boolean dyes = true;
+	/** The {@code friendCosmetics.trims} setting. */
+	private static boolean trims = true;
+	/** The {@code friendCosmetics.heads} setting: helmet skins and animated helmets. */
+	private static boolean heads = true;
+	/** The {@code friendCosmetics.models} setting. */
+	private static boolean models = true;
+
 	private Looks() {
+	}
+
+	public static boolean dyes() {
+		return dyes;
+	}
+
+	public static void dyes(boolean value) {
+		dyes = value;
+		STYLED.clear();
+	}
+
+	public static boolean trims() {
+		return trims;
+	}
+
+	public static void trims(boolean value) {
+		trims = value;
+		STYLED.clear();
+	}
+
+	public static boolean heads() {
+		return heads;
+	}
+
+	public static void heads(boolean value) {
+		heads = value;
+		STYLED.clear();
+	}
+
+	public static boolean models() {
+		return models;
+	}
+
+	public static void models(boolean value) {
+		models = value;
+		STYLED.clear();
 	}
 
 	/**
@@ -111,10 +158,12 @@ public final class Looks {
 		Cosmetic look = styled.look().get();
 		ItemStack copy = styled.result();
 		long now = Util.getMillis();
-		look.animatedDye().ifPresent(dye -> copy.set(DataComponents.DYED_COLOR,
-				new DyedItemColor(AnimatedDyes.color(dye, now / 1000.0))));
+		if (dyes) {
+			look.animatedDye().ifPresent(dye -> copy.set(DataComponents.DYED_COLOR,
+					new DyedItemColor(AnimatedDyes.color(dye, now / 1000.0))));
+		}
 		// Skyblocker draws a plain helmet skin before an animated one.
-		if (copy.is(Items.PLAYER_HEAD) && look.helmetTexture().isEmpty()) {
+		if (heads && copy.is(Items.PLAYER_HEAD) && look.helmetTexture().isEmpty()) {
 			look.animatedHelmet().flatMap(id -> AnimatedHeads.texture(id, now)).map(Looks::profile)
 					.filter(Looks::skinLoaded).ifPresent(profile -> copy.set(DataComponents.PROFILE, profile));
 		}
@@ -131,13 +180,19 @@ public final class Looks {
 
 	private static ItemStack apply(Cosmetic look, ItemStack stack) {
 		ItemStack copy = stack.copy();
-		look.dye().ifPresent(rgb -> copy.set(DataComponents.DYED_COLOR, new DyedItemColor(rgb)));
+		if (dyes) {
+			look.dye().ifPresent(rgb -> copy.set(DataComponents.DYED_COLOR, new DyedItemColor(rgb)));
+		}
 		look.glint().ifPresent(glint -> copy.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, glint));
-		look.trim().flatMap(Looks::armorTrim).ifPresent(trim -> copy.set(DataComponents.TRIM, trim));
-		if (copy.is(Items.PLAYER_HEAD)) {
+		if (trims) {
+			look.trim().flatMap(Looks::armorTrim).ifPresent(trim -> copy.set(DataComponents.TRIM, trim));
+		}
+		if (heads && copy.is(Items.PLAYER_HEAD)) {
 			look.helmetTexture().map(Looks::profile).ifPresent(profile -> copy.set(DataComponents.PROFILE, profile));
 		}
-		look.armorModel().ifPresent(model -> armorModel(copy, model));
+		if (models) {
+			look.armorModel().ifPresent(model -> armorModel(copy, model));
+		}
 		return copy;
 	}
 

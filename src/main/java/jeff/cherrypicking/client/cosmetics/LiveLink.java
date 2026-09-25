@@ -116,8 +116,11 @@ final class LiveLink {
 		}));
 	}
 
-	/** Closes the link when it is no longer wanted. */
-	private static void close() {
+	/**
+	 * Closes the link, when it is no longer wanted or on "Reconnect relay". Drops the wait, so the
+	 * next wanted link opens at once.
+	 */
+	static void close() {
 		if (socket != null) {
 			socket.sendClose(WebSocket.NORMAL_CLOSURE, "bye");
 			socket = null;

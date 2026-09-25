@@ -221,7 +221,7 @@ public final class RelayClient {
 				.thenApply(reply -> {
 					if (reply.status() == 403 && reply.body().contains("not allowed")) {
 						throw new Failure("your UUID " + uuid + " is not in the relay's ALLOWED list."
-								+ " Add it, then reconnect.", Long.MAX_VALUE);
+								+ " Add it, then click Reconnect relay in the settings.", Long.MAX_VALUE);
 					}
 					if (reply.status() == 403) {
 						throw new Failure("the relay did not accept your game key: " + reply.body()

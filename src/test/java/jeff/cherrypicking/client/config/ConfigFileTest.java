@@ -53,6 +53,8 @@ class ConfigFileTest {
 		set("livid.style", Style.OUTLINE);
 		set("livid.boxColor", new Swatch.Named("red", 0x80, 0x20));
 		set("friendCosmetics.relayUrl", "https://relay.example.com");
+		set("friendCosmetics.dyes", false);
+		set("friendCosmetics.models", false);
 
 		ConfigFile.save(file);
 		Settings.resetAll();
@@ -64,6 +66,10 @@ class ConfigFileTest {
 		assertEquals(Style.OUTLINE, value("livid.style"));
 		assertEquals(new Swatch.Named("red", 0x80, 0x20), value("livid.boxColor"));
 		assertEquals("https://relay.example.com", value("friendCosmetics.relayUrl"));
+		assertEquals(false, value("friendCosmetics.dyes"));
+		assertEquals(true, value("friendCosmetics.trims"));
+		assertEquals(true, value("friendCosmetics.heads"));
+		assertEquals(false, value("friendCosmetics.models"));
 	}
 
 	@Test
