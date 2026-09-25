@@ -20,9 +20,6 @@
 		],
 		"jeffhub": [
 			"jeff.cherrypicking.client.config.HubEntry"
-		],
-		"fabric-datagen": [
-			"jeff.cherrypicking.CherryPickingDataGenerator"
 		]
 	},
 	"mixins": [

@@ -1,6 +1,5 @@
 plugins {
 	id 'net.fabricmc.fabric-loom' version "${loom_version}"
-	id 'maven-publish'
 }
 
 repositories {
@@ -10,12 +9,6 @@ repositories {
 	// ModMenu, which is only needed to compile the entrypoint that puts the
 	// screen behind its Settings button.
 	maven { url = "https://maven.terraformersmc.com/releases" }
-}
-
-fabricApi {
-	configureDataGeneration {
-		client = true
-	}
 }
 
 dependencies {
@@ -73,23 +66,6 @@ jar {
 
 	from("LICENSE") {
 		rename { "${it}_$projectName"}
-	}
-}
-
-// configure the maven publication
-publishing {
-	publications {
-		create("mavenJava", MavenPublication) {
-			from components.java
-		}
-	}
-
-	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-	repositories {
-		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
 	}
 }
 
