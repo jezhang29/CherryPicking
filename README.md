@@ -27,3 +27,4 @@ Launcher test instance, when those folders exist, and removes older CherryPickin
 
 The puzzle solution files in `src/main/resources/assets/cherrypicking/puzzles/` come from
 [Odin](https://github.com/odtheking/Odin) unchanged: Copyright (c) 2025, odtheking — BSD 3-Clause.
+Its license text is `LICENSE-Odin.txt` in the same folder, so it ships in the jar with the data.

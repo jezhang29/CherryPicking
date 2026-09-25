@@ -5,8 +5,8 @@
  * https://github.com/odtheking/Odin
  *
  * Redistribution and use in source and binary forms, with or without modification, are permitted
- * provided that the conditions of the BSD 3-Clause License are met. The notice is also in
- * README.md.
+ * provided that the conditions of the BSD 3-Clause License are met. The full license is
+ * LICENSE-Odin.txt beside the files, which ships in the jar as the license requires.
  */
 package jeff.cherrypicking.client.dungeon.puzzle;
 
