@@ -18,10 +18,10 @@ import jeff.cherrypicking.client.dungeon.DungeonState;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -31,7 +31,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.DyedItemColor;
 import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.item.equipment.EquipmentAssets;
@@ -74,10 +73,13 @@ public final class Looks {
 	 * The stack to draw in {@code slot}. It is {@code stack} unless the wearer is a friend with a look
 	 * for it. Called several times per living entity per frame, so every other entity leaves at the
 	 * first checks.
+	 *
+	 * <p>Never on your own player: Skyblocker draws your own looks at once, and a relay look would
+	 * show a change only after the next share and fetch.
 	 */
 	public static ItemStack styled(LivingEntity entity, EquipmentSlot slot, ItemStack stack) {
 		if (!Cosmetics.enabled() || FriendLooks.isEmpty() || stack.isEmpty() || !(entity instanceof Player)
-				|| !DungeonState.inSkyBlock()) {
+				|| entity instanceof LocalPlayer || !DungeonState.inSkyBlock()) {
 			return stack;
 		}
 		Payload payload = FriendLooks.of(entity.getUUID());
@@ -120,14 +122,6 @@ public final class Looks {
 
 	private static ItemStack apply(Cosmetic look, ItemStack stack) {
 		ItemStack copy = stack.copy();
-		// Skyblocker draws its own looks on any stack with a uuid in its config. A friend's armor has
-		// no uuid; your own does. Without the uuid, the look here wins on your own armor too, which
-		// is what the self-test needs, and a friend's armor is unchanged.
-		CompoundTag tag = SkyblockItem.tag(stack);
-		if (tag.contains("uuid")) {
-			tag.remove("uuid");
-			copy.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
-		}
 		look.dye().ifPresent(rgb -> copy.set(DataComponents.DYED_COLOR, new DyedItemColor(rgb)));
 		look.glint().ifPresent(glint -> copy.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, glint));
 		look.trim().flatMap(Looks::armorTrim).ifPresent(trim -> copy.set(DataComponents.TRIM, trim));

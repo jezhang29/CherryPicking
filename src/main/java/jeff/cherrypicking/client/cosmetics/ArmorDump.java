@@ -96,8 +96,7 @@ public final class ArmorDump {
 			return ", drawn: the real item";
 		}
 		DyedItemColor dye = drawn.get(DataComponents.DYED_COLOR);
-		return ", drawn: a copy, uuid " + (SkyblockItem.uuid(SkyblockItem.tag(drawn)).isEmpty() ? "NONE" : "KEPT")
-				+ ", dye " + (dye == null ? "NONE" : hex(dye.rgb())) + skin(drawn);
+		return ", drawn: a copy, dye " + (dye == null ? "NONE" : hex(dye.rgb())) + skin(drawn);
 	}
 
 	/** A head's skin as the game reads it, by the start of its texture hash; empty for other items. */

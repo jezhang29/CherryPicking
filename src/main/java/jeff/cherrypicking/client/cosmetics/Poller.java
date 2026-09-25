@@ -24,9 +24,6 @@ import net.minecraft.client.Minecraft;
  * friend list changes, and then every {@code pollSeconds}. The relay answers "not changed" to a
  * fetch with the last {@code ETag}, which keeps the old looks.
  *
- * <p>Put your own name in the list to see your own shared looks on yourself; that is the self-test
- * in docs/friend-cosmetics-plan.md, section 11.1.
- *
  * <p>Client thread only; the fetch reports back through {@link Minecraft#execute}.
  */
 public final class Poller {
