@@ -17,7 +17,9 @@ Requires JDK 25.
 ./gradlew build
 ```
 
-The build also copies the jar into `~/Library/Application Support/minecraft/mods/`.
+The build also copies the jar into `~/Library/Application Support/minecraft/mods/` and a Prism
+Launcher test instance, when those folders exist, and removes older CherryPicking jars there.
+`./gradlew build -x installMod` builds and tests without installing.
 
 ## License
 

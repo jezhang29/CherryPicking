@@ -1,0 +1,28 @@
+// Build logic that needs tests of its own.
+plugins {
+	id 'java'
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	// JsonSlurper, to read fabric.mod.json. Gradle ships this Groovy.
+	implementation localGroovy()
+
+	testImplementation platform("org.junit:junit-bom:5.11.4")
+	testImplementation "org.junit.jupiter:junit-jupiter"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+test {
+	useJUnitPlatform()
+}
+
+// Gradle builds only buildSrc's jar, never its tests, and the root build cannot depend on a
+// buildSrc task. So the jar waits for the tests: every build, installMod included, stops if one
+// fails. Gradle skips them while buildSrc is unchanged.
+tasks.named("jar") {
+	dependsOn(tasks.named("test"))
+}

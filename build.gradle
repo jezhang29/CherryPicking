@@ -97,10 +97,12 @@ publishing {
  * Copies the built mod jar into the real Minecraft mods folder and the Prism Launcher test
  * instance, because those folders are how this mod is tested - a dev client has no Hypixel to
  * connect to. `build` finalizes with it, so a fresh jar is in place without a second command.
+ * `./gradlew build -x installMod` verifies without touching either folder.
  *
- * <p>A mods folder that does not exist is skipped, which is what keeps it off CI and off any
- * machine that is not the user's Mac. The destination name carries the version, so a version bump
- * leaves the old jar in each folder beside the new one until it is deleted by hand.
+ * <p>A mods folder that does not exist is skipped, which is what keeps it off any machine that is
+ * not the user's Mac. The jar is named `cherrypicking-<version>.jar`; any other jar in the folder
+ * with this mod's id, such as the one from before a version bump, is deleted (buildSrc
+ * `ModInstall`), so each folder holds one copy.
  */
 tasks.register("installMod") {
 	description = "Copies the built mod jar into the Minecraft and Prism Launcher mods folders"
@@ -125,9 +127,9 @@ tasks.register("installMod") {
 				logger.lifecycle("installMod: no mods folder at ${modsDir}, skipping")
 				return
 			}
-			java.nio.file.Files.copy(builtJar.toPath(), new File(modsDir, jarName).toPath(),
-					java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+			def removed = ModInstall.install(builtJar.toPath(), modsDir.toPath(), jarName)
 			logger.lifecycle("installMod: installed ${jarName} into ${modsDir}")
+			removed.each { logger.lifecycle("installMod: removed the older ${it} from ${modsDir}") }
 		}
 	}
 }
