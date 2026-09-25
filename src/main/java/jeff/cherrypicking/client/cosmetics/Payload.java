@@ -1,16 +1,19 @@
 package jeff.cherrypicking.client.cosmetics;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
@@ -37,6 +40,7 @@ record Payload(Map<String, Cosmetic> looks, Map<EquipmentSlot, String> equipped)
 	static final int FORMAT = 1;
 	static final int MAX_CHARS = 64 * 1024;
 	static final int MAX_LOOKS = 500;
+	static final int MAX_KEYFRAMES = 32;
 
 	private static final Pattern ITEM_UUID = Pattern.compile("[0-9a-f-]{36}");
 	private static final Pattern SKYBLOCK_ID = Pattern.compile("[A-Z0-9_:;-]{1,64}");
@@ -172,15 +176,16 @@ record Payload(Map<String, Cosmetic> looks, Map<EquipmentSlot, String> equipped)
 		return out.toString();
 	}
 
-	private static final List<String> FIELDS = List.of("dye", "trim", "helmetTexture", "glint");
+	private static final List<String> FIELDS = List.of("dye", "animatedDye", "trim", "helmetTexture", "glint");
 
 	private static int given(JsonObject fields) {
 		return (int) FIELDS.stream().filter(fields::has).count();
 	}
 
 	private static int kept(Cosmetic look) {
-		return (look.dye().isPresent() ? 1 : 0) + (look.trim().isPresent() ? 1 : 0)
-				+ (look.helmetTexture().isPresent() ? 1 : 0) + (look.glint().isPresent() ? 1 : 0);
+		return (look.dye().isPresent() ? 1 : 0) + (look.animatedDye().isPresent() ? 1 : 0)
+				+ (look.trim().isPresent() ? 1 : 0) + (look.helmetTexture().isPresent() ? 1 : 0)
+				+ (look.glint().isPresent() ? 1 : 0);
 	}
 
 	/** One look; empty without a valid id. A field that fails its check is left out. */
@@ -210,7 +215,50 @@ record Payload(Map<String, Cosmetic> looks, Map<EquipmentSlot, String> equipped)
 		Optional<Boolean> glint = fields.get("glint") instanceof JsonPrimitive value && value.isBoolean()
 				? Optional.of(value.getAsBoolean()) : Optional.empty();
 
-		return Optional.of(new Cosmetic(id.getAsString(), dye, trim, texture, glint));
+		return Optional.of(new Cosmetic(id.getAsString(), dye, animatedDye(fields.get("animatedDye")), trim, texture,
+				glint));
+	}
+
+	/**
+	 * An animated dye with 2 to 32 keyframes in time order, times from 0 to 1, a duration from 0.1 to
+	 * 60 s and a delay of 0 or more. Colors keep only their RGB. Skyblocker's own animation needs two
+	 * keyframes, and the order is what it blends between.
+	 */
+	private static Optional<Cosmetic.AnimatedDye> animatedDye(JsonElement value) {
+		if (!(value instanceof JsonObject dye) || !(dye.get("keyframes") instanceof JsonArray frames)
+				|| frames.size() < 2 || frames.size() > MAX_KEYFRAMES
+				|| !(dye.get("cycleBack") instanceof JsonPrimitive cycleBack) || !cycleBack.isBoolean()) {
+			return Optional.empty();
+		}
+		OptionalDouble duration = number(dye.get("duration"));
+		OptionalDouble delay = number(dye.get("delay"));
+		if (duration.isEmpty() || duration.getAsDouble() < 0.1 || duration.getAsDouble() > 60
+				|| delay.isEmpty() || delay.getAsDouble() < 0) {
+			return Optional.empty();
+		}
+		List<Cosmetic.Keyframe> keyframes = new ArrayList<>();
+		for (JsonElement frame : frames) {
+			if (!(frame instanceof JsonObject keyframe)
+					|| !(keyframe.get("color") instanceof JsonPrimitive color) || !color.isNumber()) {
+				return Optional.empty();
+			}
+			OptionalDouble time = number(keyframe.get("time"));
+			double previous = keyframes.isEmpty() ? 0 : keyframes.getLast().time();
+			if (time.isEmpty() || time.getAsDouble() < previous || time.getAsDouble() > 1) {
+				return Optional.empty();
+			}
+			keyframes.add(new Cosmetic.Keyframe(color.getAsInt() & 0xFFFFFF, (float) time.getAsDouble()));
+		}
+		return Optional.of(new Cosmetic.AnimatedDye(List.copyOf(keyframes), cycleBack.getAsBoolean(),
+				(float) delay.getAsDouble(), (float) duration.getAsDouble()));
+	}
+
+	/** A finite JSON number; empty for anything else. */
+	private static OptionalDouble number(JsonElement value) {
+		if (value instanceof JsonPrimitive number && number.isNumber() && Double.isFinite(number.getAsDouble())) {
+			return OptionalDouble.of(number.getAsDouble());
+		}
+		return OptionalDouble.empty();
 	}
 
 	/**

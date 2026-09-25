@@ -35,7 +35,9 @@ class SkyblockerFileTest {
 		assertEquals(List.of(CHEST, HELMET), List.copyOf(looks.keySet()));
 		assertEquals(JsonParser.parseString("""
 				{"dye": 16711680, "trim": {"material": "minecraft:netherite", "pattern": "minecraft:tide"},
-				 "glint": true}"""), looks.get(CHEST));
+				 "glint": true,
+				 "animatedDye": {"keyframes": [], "cycleBack": true, "delay": 0.0, "duration": 10.0}}"""),
+				looks.get(CHEST));
 		assertEquals(JsonParser.parseString("{\"helmetTexture\": \"dGV4dHVyZQ==\"}"), looks.get(HELMET));
 	}
 

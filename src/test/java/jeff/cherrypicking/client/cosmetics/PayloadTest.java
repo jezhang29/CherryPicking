@@ -3,6 +3,7 @@ package jeff.cherrypicking.client.cosmetics;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -115,7 +116,7 @@ class PayloadTest {
 				  "helmetTexture": "%s",
 				  "glint": "yes"}}}
 				""".formatted(RED_WISE, texture("https://example.com/skin.png")), "test").orElseThrow();
-		assertEquals(new Cosmetic("WISE_WITHER_CHESTPLATE", OptionalInt.empty(), Optional.empty(),
+		assertEquals(new Cosmetic("WISE_WITHER_CHESTPLATE", OptionalInt.empty(), Optional.empty(), Optional.empty(),
 				Optional.empty(), Optional.empty()), payload.looks().get(RED_WISE));
 	}
 
@@ -125,6 +126,43 @@ class PayloadTest {
 				{"format": 1, "looks": {"%s": {"id": "WISE_WITHER_CHESTPLATE", "dye": -1}}}
 				""".formatted(RED_WISE), "test").orElseThrow();
 		assertEquals(OptionalInt.of(0xFFFFFF), payload.looks().get(RED_WISE).dye());
+	}
+
+	@Test
+	void anAnimatedDyeDecodesWithRgbColors() {
+		// Skyblocker saves colors with the alpha byte: -4522111 is 0xFFBAFF81.
+		Payload payload = Payload.decode("""
+				{"format": 1, "looks": {"%s": {"id": "WISE_WITHER_CHESTPLATE", "animatedDye": {
+				  "keyframes": [{"color": -4522111, "time": 0.0}, {"color": 255, "time": 1.0}],
+				  "cycleBack": true, "delay": 0.5, "duration": 10.0}}}}
+				""".formatted(RED_WISE), "test").orElseThrow();
+		assertEquals(Optional.of(new Cosmetic.AnimatedDye(
+				List.of(new Cosmetic.Keyframe(0xBAFF81, 0f), new Cosmetic.Keyframe(0x0000FF, 1f)), true, 0.5f, 10f)),
+				payload.looks().get(RED_WISE).animatedDye());
+	}
+
+	@Test
+	void anAnimatedDyeThatCannotBeDrawnIsLeftOut() {
+		String twoFrames = "[{\"color\": 1, \"time\": 0}, {\"color\": 2, \"time\": 1}]";
+		List<String> bad = List.of(
+				"{\"keyframes\": [{\"color\": 1, \"time\": 0}], \"cycleBack\": true, \"delay\": 0, \"duration\": 2}",
+				"{\"keyframes\": [{\"color\": 1, \"time\": 0.5}, {\"color\": 2, \"time\": 0.1}],"
+						+ " \"cycleBack\": true, \"delay\": 0, \"duration\": 2}",
+				"{\"keyframes\": [{\"color\": 1, \"time\": 0}, {\"color\": 2, \"time\": 1.5}],"
+						+ " \"cycleBack\": true, \"delay\": 0, \"duration\": 2}",
+				"{\"keyframes\": " + twoFrames + ", \"cycleBack\": true, \"delay\": 0, \"duration\": 0}",
+				"{\"keyframes\": " + twoFrames + ", \"cycleBack\": true, \"delay\": 0, \"duration\": 61}",
+				"{\"keyframes\": " + twoFrames + ", \"cycleBack\": true, \"delay\": -1, \"duration\": 2}",
+				"{\"keyframes\": " + twoFrames + ", \"delay\": 0, \"duration\": 2}",
+				"{\"keyframes\": [" + "{\"color\": 1, \"time\": 0},".repeat(32)
+						+ "{\"color\": 1, \"time\": 1}], \"cycleBack\": true, \"delay\": 0, \"duration\": 2}");
+		for (String dye : bad) {
+			Payload payload = Payload.decode("""
+					{"format": 1, "looks": {"%s": {"id": "WISE_WITHER_CHESTPLATE", "dye": 1, "animatedDye": %s}}}
+					""".formatted(RED_WISE, dye), "test").orElseThrow();
+			assertEquals(Optional.empty(), payload.looks().get(RED_WISE).animatedDye(), dye);
+			assertEquals(OptionalInt.of(1), payload.looks().get(RED_WISE).dye(), dye);
+		}
 	}
 
 	@Test
@@ -154,7 +192,8 @@ class PayloadTest {
 				""".formatted(RED_WISE, GREEN_BOOTS, RED_WISE)), JsonParser.parseString(json));
 		Payload payload = Payload.decode(json, "test").orElseThrow();
 		assertEquals(Optional.of(new Cosmetic("WISE_WITHER_CHESTPLATE", OptionalInt.of(0xFF0000), Optional.empty(),
-				Optional.empty(), Optional.of(true))), payload.look(EquipmentSlot.CHEST, "WISE_WITHER_CHESTPLATE"));
+				Optional.empty(), Optional.empty(), Optional.of(true))),
+				payload.look(EquipmentSlot.CHEST, "WISE_WITHER_CHESTPLATE"));
 	}
 
 	@Test
@@ -183,7 +222,7 @@ class PayloadTest {
 		assertEquals(Set.of(worn), shared.keySet());
 	}
 
-		@Test
+	@Test
 	void onlyMojangSkinsAreAllowed() {
 		assertTrue(Payload.skinOnMojang(texture("http://textures.minecraft.net/texture/abc123")));
 		assertTrue(Payload.skinOnMojang(texture("https://textures.minecraft.net/texture/abc123")));
@@ -198,7 +237,8 @@ class PayloadTest {
 	}
 
 	private static Cosmetic look(String id, int dye) {
-		return new Cosmetic(id, OptionalInt.of(dye), Optional.empty(), Optional.empty(), Optional.empty());
+		return new Cosmetic(id, OptionalInt.of(dye), Optional.empty(), Optional.empty(), Optional.empty(),
+				Optional.empty());
 	}
 
 	/** A texture property as Mojang writes one, pointing at {@code url}. */

@@ -23,6 +23,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.util.Util;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -48,8 +49,11 @@ public final class Looks {
 	private record Key(UUID player, EquipmentSlot slot) {
 	}
 
-	/** The copy made for {@code source} from {@code payload}; {@code source} itself if no look matched. */
-	private record Styled(ItemStack source, Payload payload, ItemStack result) {
+	/**
+	 * The copy made for {@code source} from {@code payload}, and the look it has. With no look,
+	 * {@code result} is {@code source} itself and {@code look} is empty.
+	 */
+	private record Styled(ItemStack source, Payload payload, ItemStack result, Optional<Cosmetic> look) {
 	}
 
 	private static final Map<Key, Styled> STYLED = new HashMap<>();
@@ -77,15 +81,23 @@ public final class Looks {
 		// The same stack object stays in the slot until the server sends a change, so a copy is made
 		// once per change, not once per frame.
 		Key key = new Key(entity.getUUID(), slot);
-		Styled cached = STYLED.get(key);
-		if (cached != null && cached.source() == stack && cached.payload() == payload) {
-			return cached.result();
+		Styled styled = STYLED.get(key);
+		if (styled == null || styled.source() != stack || styled.payload() != payload) {
+			Optional<Cosmetic> look = payload.look(slot, SkyblockItem.id(SkyblockItem.tag(stack)));
+			styled = new Styled(stack, payload, look.map(found -> apply(found, stack)).orElse(stack), look);
+			STYLED.put(key, styled);
 		}
-		ItemStack result = payload.look(slot, SkyblockItem.id(SkyblockItem.tag(stack)))
-				.map(look -> apply(look, stack))
-				.orElse(stack);
-		STYLED.put(key, new Styled(stack, payload, result));
-		return result;
+		animate(styled);
+		return styled.result();
+	}
+
+	/**
+	 * Moves the copy's animations to now. The render state is built from the copy in the same frame,
+	 * so changing the cached copy is safe.
+	 */
+	private static void animate(Styled styled) {
+		styled.look().flatMap(Cosmetic::animatedDye).ifPresent(dye -> styled.result().set(DataComponents.DYED_COLOR,
+				new DyedItemColor(AnimatedDyes.color(dye, Util.getMillis() / 1000.0))));
 	}
 
 	private static ItemStack apply(Cosmetic look, ItemStack stack) {

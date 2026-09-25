@@ -29,6 +29,7 @@ final class SkyblockerFile {
 	/** Skyblocker's map name, and the payload field it becomes. */
 	private static final Map<String, String> FIELDS = Map.of(
 			"customDyeColors", "dye",
+			"customAnimatedDyes", "animatedDye",
 			"customArmorTrims", "trim",
 			"customHelmetTextures", "helmetTexture",
 			"customGlint", "glint");

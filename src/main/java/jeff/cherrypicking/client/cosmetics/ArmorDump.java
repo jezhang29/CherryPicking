@@ -122,6 +122,8 @@ public final class ArmorDump {
 	private static String describe(Cosmetic look) {
 		StringBuilder text = new StringBuilder(look.id());
 		look.dye().ifPresent(rgb -> text.append(" dye ").append(hex(rgb)));
+		look.animatedDye().ifPresent(dye -> text.append(" animated dye of ").append(dye.keyframes().size())
+				.append(" colors"));
 		look.trim().ifPresent(trim -> text.append(" trim ").append(trim.material()).append('/').append(trim.pattern()));
 		look.helmetTexture().ifPresent(texture -> text.append(" skin ")
 				.append(Payload.skinUrl(texture).map(ArmorDump::hash).orElse("?")));

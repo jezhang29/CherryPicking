@@ -1,5 +1,6 @@
 package jeff.cherrypicking.client.cosmetics;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 
@@ -11,11 +12,26 @@ import net.minecraft.resources.Identifier;
  *
  * @param id            the SkyBlock item id; other clients match a friend's armor by it
  * @param dye           RGB, without alpha
+ * @param animatedDye   drawn in place of {@code dye}, as Skyblocker does
  * @param helmetTexture a base64 texture property whose skin is on textures.minecraft.net
  */
-record Cosmetic(String id, OptionalInt dye, Optional<Trim> trim, Optional<String> helmetTexture,
-		Optional<Boolean> glint) {
+record Cosmetic(String id, OptionalInt dye, Optional<AnimatedDye> animatedDye, Optional<Trim> trim,
+		Optional<String> helmetTexture, Optional<Boolean> glint) {
 	/** Names in the trim registries. Whether the client has them is checked when drawing. */
 	record Trim(Identifier material, Identifier pattern) {
+	}
+
+	/**
+	 * Skyblocker's animated dye: the color moves through the keyframes in {@code duration} seconds.
+	 *
+	 * @param keyframes at least two, with times from 0 to 1 in order
+	 * @param cycleBack at the end, go back through the keyframes, not start again
+	 * @param delay     seconds that move the start of the animation, as Skyblocker reads them
+	 */
+	record AnimatedDye(List<Keyframe> keyframes, boolean cycleBack, float delay, float duration) {
+	}
+
+	/** One color of an animated dye, RGB without alpha, at {@code time} from 0 to 1. */
+	record Keyframe(int color, float time) {
 	}
 }
