@@ -72,7 +72,8 @@ final class AnimatedHeads {
 
 	/** The frame shown at {@code millis}: each lasts {@code ticks} game ticks of 50 ms, then the next. */
 	static String frame(Head head, long millis) {
-		return head.textures().get((int) (millis / 50 / head.ticks() % head.textures().size()));
+		// floorMod: the game's clock comes from System.nanoTime, which may be negative.
+		return head.textures().get((int) Math.floorMod(millis / 50 / head.ticks(), head.textures().size()));
 	}
 
 	private static void load() {

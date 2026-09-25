@@ -46,6 +46,7 @@ class AnimatedHeadsTest {
 		assertEquals(FIRST, AnimatedHeads.frame(head, 99));
 		assertEquals(SECOND, AnimatedHeads.frame(head, 100));
 		assertEquals(FIRST, AnimatedHeads.frame(head, 200));
+		assertEquals(SECOND, AnimatedHeads.frame(head, -100));
 	}
 
 	private static String texture(String url) {
