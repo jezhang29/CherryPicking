@@ -1,0 +1,14 @@
+// Cloudflare's settings for the relay. Deploy from this folder: npx wrangler deploy
+{
+  "name": "cherry-relay",
+  "main": "worker.js",
+  "compatibility_date": "2025-09-01",
+  "workers_dev": true,
+  // SECRET and ALLOWED are set in the Cloudflare dashboard; a deploy keeps them.
+  "keep_vars": true,
+  "durable_objects": {
+    "bindings": [{ "name": "HUB", "class_name": "Hub" }]
+  },
+  // Creates the Hub's storage the first time. Never edit or remove an entry that was deployed.
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Hub"] }]
+}

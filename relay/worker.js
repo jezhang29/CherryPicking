@@ -1,7 +1,9 @@
-// cherry-relay: stores each allowed player's Skyblocker cosmetics.
-// Bindings: COSMETICS (KV). Secrets/vars: SECRET, ALLOWED (comma-separated undashed UUIDs).
-// Source of truth: relay/worker.js in the cherrypicking repo. Paste this whole file into the
-// Cloudflare editor. Test: node --test relay/worker.test.mjs
+// cherry-relay: stores each allowed player's Skyblocker cosmetics, and pushes a change at once to
+// the friends who are online.
+// Bindings: HUB (Durable Object, class Hub; relay/wrangler.jsonc). Vars: SECRET, ALLOWED
+// (comma-separated undashed UUIDs), kept on deploy by keep_vars.
+// Source of truth: relay/worker.js in the cherrypicking repo. Deploy: cd relay && npx wrangler deploy
+// Test: node --test relay/worker.test.mjs
 
 const enc = new TextEncoder();
 const NAME = /^[A-Za-z0-9_]{1,16}$/;
@@ -27,6 +29,7 @@ export default {
       if (req.method === "POST" && url.pathname === "/login") return await login(req, env);
       if (req.method === "PUT" && url.pathname === "/cosmetics") return await publish(req, env);
       if (req.method === "GET" && url.pathname === "/cosmetics") return await fetchMany(req, url, env);
+      if (req.method === "GET" && url.pathname === "/live") return await live(req, env);
       return json({ error: "not found" }, 404);
     } catch (e) {
       return json({ error: "server error" }, 500);
@@ -90,35 +93,38 @@ async function publish(req, env) {
   if (text.length > MAX_BODY) return json({ error: "too large" }, 413);
   const data = JSON.parse(text);
   if (data?.format !== 1) return json({ error: "bad format" }, 400);
-
-  const etag = (await sha256(text)).slice(0, 16);
-  const old = await env.COSMETICS.get("c:" + who.uuid, "json");
-  if (old?.etag !== etag) {
-    await env.COSMETICS.put("c:" + who.uuid,
-        JSON.stringify({ name: who.name, updated: now(), etag, data }));
-  }
-  if (old?.name !== who.name) {
-    await env.COSMETICS.put("n:" + who.name.toLowerCase(), who.uuid);
-  }
-  return new Response(null, { status: 204 });
+  return hub(env).fetch(inner("/publish", who, { method: "POST", body: text }));
 }
 
 async function fetchMany(req, url, env) {
   if (!(await auth(req, env))) return json({ error: "unauthorized" }, 401);
-  const names = (url.searchParams.get("names") ?? "").split(",").filter((n) => NAME.test(n)).slice(0, 10);
-  const players = [];
-  for (const name of names) {
-    const uuid = await env.COSMETICS.get("n:" + name.toLowerCase());
-    const entry = uuid ? await env.COSMETICS.get("c:" + uuid, "json") : null;
-    players.push(entry
-        ? { name: entry.name, uuid, updated: entry.updated, etag: entry.etag, data: entry.data }
-        : { name, missing: true });
-  }
+  const names = nameList(url.searchParams.get("names"));
+  const { players } = await (await hub(env).fetch(inner("/players?names=" + names.join(",")))).json();
   const etag = '"' + (await sha256(players.map((p) => p.etag ?? "-").join(","))).slice(0, 16) + '"';
   if (req.headers.get("If-None-Match") === etag) {
     return new Response(null, { status: 304, headers: { ETag: etag } });
   }
   return json({ players }, 200, { ETag: etag });
+}
+
+// The live link: a WebSocket that the hub keeps, so it can push a friend's looks the moment they
+// change.
+async function live(req, env) {
+  if (req.headers.get("Upgrade") !== "websocket") return json({ error: "expected a WebSocket" }, 426);
+  const who = await auth(req, env);
+  if (!who) return json({ error: "unauthorized" }, 401);
+  return hub(env).fetch(inner("/live", who, { headers: { Upgrade: "websocket" } }));
+}
+
+// All players share one hub: a few friends fit easily in one Durable Object.
+const hub = (env) => env.HUB.get(env.HUB.idFromName("hub"));
+
+// A request from this Worker to the hub. The hub trusts X-Player, because only this Worker can
+// reach it, and only after auth.
+function inner(path, who, init = {}) {
+  const headers = { ...init.headers };
+  if (who) headers["X-Player"] = JSON.stringify(who);
+  return new Request("https://hub" + path, { ...init, headers });
 }
 
 async function auth(req, env) {
@@ -129,10 +135,11 @@ async function auth(req, env) {
   const [uuid, name, expires, sig] = parts;
   if (Number(expires) < now() || !allowed(env).has(uuid)) return null;
   if (sig !== await hmac(env.SECRET, `token:${uuid}.${name}.${expires}`)) return null;
-  return { uuid, name };
+  return { uuid, name, expires: Number(expires) };
 }
 
 const now = () => Math.floor(Date.now() / 1000);
+const nameList = (text) => (text ?? "").split(",").filter((n) => NAME.test(n)).slice(0, 10);
 const allowed = (env) => new Set((env.ALLOWED ?? "").split(",").map((s) => s.trim()).filter(Boolean));
 const serverId = async (env, name, ts) => (await hmac(env.SECRET, `challenge:${name.toLowerCase()}:${ts}`)).slice(0, 40);
 const hex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -161,4 +168,108 @@ function json(body, status = 200, headers = {}) {
   return new Response(JSON.stringify(body), {
     status, headers: { "Content-Type": "application/json", ...headers },
   });
+}
+
+// The one Durable Object. It stores each player's looks ("c:<uuid>", and "n:<lower name>" to find
+// the uuid), and holds the live link of each player online, with the names that link watches. A
+// changed publish is pushed at once to every link that watches that player. Only the Worker above
+// reaches it, after checking the token.
+export class Hub {
+  constructor(ctx, env) {
+    this.ctx = ctx;
+    this.env = env;
+    // Cloudflare answers the client's ping without waking the hub, so an idle link costs nothing.
+    ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair("ping", "pong"));
+  }
+
+  async fetch(req) {
+    const url = new URL(req.url);
+    const who = JSON.parse(req.headers.get("X-Player") ?? "null");
+    if (url.pathname === "/publish") return await this.publish(who, await req.text());
+    if (url.pathname === "/players") {
+      return json({ players: await this.players(nameList(url.searchParams.get("names"))) });
+    }
+    if (url.pathname === "/live") {
+      const [client, server] = Object.values(new WebSocketPair());
+      this.ctx.acceptWebSocket(server);
+      server.serializeAttachment({ uuid: who.uuid, expires: who.expires, names: [] });
+      return new Response(null, { status: 101, webSocket: client });
+    }
+    return json({ error: "not found" }, 404);
+  }
+
+  async publish(who, text) {
+    const storage = this.ctx.storage;
+    const old = await storage.get("c:" + who.uuid);
+    if (old?.name !== who.name) await storage.put("n:" + who.name.toLowerCase(), who.uuid);
+    const etag = (await sha256(text)).slice(0, 16);
+    if (old?.etag !== etag) {
+      const entry = { name: who.name, updated: now(), etag, data: JSON.parse(text) };
+      await storage.put("c:" + who.uuid, entry);
+      this.push(who.uuid, entry);
+    }
+    return new Response(null, { status: 204 });
+  }
+
+  async players(names) {
+    const players = [];
+    for (const name of names) {
+      const uuid = await this.ctx.storage.get("n:" + name.toLowerCase());
+      const entry = uuid ? await this.ctx.storage.get("c:" + uuid) : null;
+      players.push(entry ? shown(uuid, entry) : { name, missing: true });
+    }
+    return players;
+  }
+
+  push(uuid, entry) {
+    const message = JSON.stringify({ type: "changed", players: [shown(uuid, entry)] });
+    for (const ws of this.ctx.getWebSockets()) {
+      const link = ws.deserializeAttachment();
+      if (this.valid(ws, link) && link.names.includes(entry.name.toLowerCase())) send(ws, message);
+    }
+  }
+
+  // A link whose token ran out, or whose player left ALLOWED, is closed; the client logs in again.
+  valid(ws, link) {
+    if (link.expires >= now() && allowed(this.env).has(link.uuid)) return true;
+    ws.close(4001, "log in again");
+    return false;
+  }
+
+  // The client's one message: {"type":"watch","names":[...]}, its friend list. The reply is those
+  // friends' looks now, the same list GET /cosmetics gives.
+  async webSocketMessage(ws, message) {
+    const link = ws.deserializeAttachment();
+    if (!this.valid(ws, link)) return;
+    let request;
+    try {
+      request = JSON.parse(message);
+    } catch {
+      return;
+    }
+    if (request?.type !== "watch" || !Array.isArray(request.names)) return;
+    const names = nameList(request.names.join(","));
+    ws.serializeAttachment({ ...link, names: names.map((n) => n.toLowerCase()) });
+    send(ws, JSON.stringify({ type: "friends", players: await this.players(names) }));
+  }
+
+  webSocketClose(ws, code, reason) {
+    try {
+      ws.close(code, reason);
+    } catch {
+      // The codes 1005 and 1006 only report a close and cannot be sent back; nothing to answer.
+    }
+  }
+}
+
+const shown = (uuid, entry) =>
+  ({ name: entry.name, uuid, updated: entry.updated, etag: entry.etag, data: entry.data });
+
+// A link can close while a message is on its way; the client connects again by itself.
+function send(ws, message) {
+  try {
+    ws.send(message);
+  } catch {
+    // Closed: nothing to send to.
+  }
 }

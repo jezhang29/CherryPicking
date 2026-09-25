@@ -41,3 +41,7 @@ replay_*.log
 
 # logs
 logs/
+
+# cloudflare
+
+relay/.wrangler/
