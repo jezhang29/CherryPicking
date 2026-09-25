@@ -1,5 +1,6 @@
 package jeff.cherrypicking.client.cosmetics;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -25,6 +26,13 @@ public final class FriendLooks {
 	}
 
 	static void replace(Map<UUID, Payload> next) {
+		byPlayer = Map.copyOf(next);
+	}
+
+	/** Replaces the payloads of the players in {@code changed}, and keeps the others. */
+	static void update(Map<UUID, Payload> changed) {
+		Map<UUID, Payload> next = new HashMap<>(byPlayer);
+		next.putAll(changed);
 		byPlayer = Map.copyOf(next);
 	}
 }

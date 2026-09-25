@@ -227,7 +227,8 @@ public final class Settings {
 					"The Minecraft names of the friends whose armor looks you want to see, separated by commas. Add your own name to see your shared looks on yourself.",
 					new Control.Text(200), Poller::friends, Poller::friends);
 			whole("friendCosmetics.pollSeconds", "Check every", Section.FRIEND_COSMETICS,
-					"How often to get your friends' latest looks from the relay.",
+					"How often to get your friends' looks when the live link to the relay is down. With the"
+							+ " link, a change comes at once.",
 					new Control.Whole(30, 600, 30, "s"), Poller::pollSeconds, Poller::pollSeconds);
 			flag("friendCosmetics.share", "Share my cosmetics", Section.FRIEND_COSMETICS,
 					"Sends your own Skyblocker armor looks to the relay, so your friends can see them.",

@@ -21,11 +21,11 @@ import net.minecraft.util.Util;
  * when it changes (docs/friend-cosmetics-plan.md, sections 7.3 and 7.4).
  *
  * <ul>
- *   <li>Every 5 s, on an IO thread: has the file changed? If so, it is read again. The first
+ *   <li>Every second, on an IO thread: has the file changed? If so, it is read again. The first
  *       read also loads the saved {@link SeenIds}; after that, new ids are saved.</li>
  *   <li>Every second: {@link SeenIds} scans your items, and the payload is built again.</li>
- *   <li>A changed payload is sent after a wait, 10 s after a file change and 2 s after anything
- *       else, so a burst of changes is one send.</li>
+ *   <li>A changed payload is sent after a wait, 1 s after a file change and 0.5 s after anything
+ *       else, so a burst of changes is one send. The relay pushes it to friends at once.</li>
  * </ul>
  *
  * <p>Only on SkyBlock, where the worn armor and the seen ids mean something. Client thread only;
@@ -33,9 +33,9 @@ import net.minecraft.util.Util;
  */
 public final class Publisher {
 	private static final int SCAN_TICKS = 20;
-	private static final int FILE_TICKS = 100;
-	private static final int FILE_WAIT_TICKS = 200;
-	private static final int CHANGE_WAIT_TICKS = 40;
+	private static final int FILE_TICKS = 20;
+	private static final int FILE_WAIT_TICKS = 20;
+	private static final int CHANGE_WAIT_TICKS = 10;
 
 	/** The {@code friendCosmetics.share} setting. */
 	private static volatile boolean share = true;

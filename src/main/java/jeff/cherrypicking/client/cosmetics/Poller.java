@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 
 import jeff.cherrypicking.CherryPicking;
@@ -20,9 +21,15 @@ import jeff.cherrypicking.client.dungeon.DungeonState;
 import net.minecraft.client.Minecraft;
 
 /**
- * Fetches your friends' looks from the relay into {@link FriendLooks}: on joining SkyBlock, when the
- * friend list changes, and then every {@code pollSeconds}. The relay answers "not changed" to a
- * fetch with the last {@code ETag}, which keeps the old looks.
+ * Gets your friends' looks from the relay into {@link FriendLooks}.
+ *
+ * <p>While the {@link LiveLink} is open, it sends the friend list through the link, on each new
+ * link and each list change. The relay answers with the friends' looks ({@code friends}), then
+ * sends a friend's looks again each time that friend shares a change ({@code changed}).
+ *
+ * <p>While the link is down, it fetches instead: on joining SkyBlock, when the friend list changes,
+ * and then every {@code pollSeconds}. The relay answers "not changed" to a fetch with the last
+ * {@code ETag}, which keeps the old looks.
  *
  * <p>Client thread only; the fetch reports back through {@link Minecraft#execute}.
  */
@@ -46,6 +53,8 @@ public final class Poller {
 	/** The last fetch's {@code ETag}; it describes what {@link FriendLooks} holds now. */
 	private static String etag;
 	private static List<String> lastMissing = List.of();
+	/** The {@link LiveLink#generation} that has the current friend list. */
+	private static int watchedGeneration = -1;
 
 	private Poller() {
 	}
@@ -82,6 +91,7 @@ public final class Poller {
 		etag = null;
 		lastMissing = List.of();
 		refetch = true;
+		watchedGeneration = -1;
 	}
 
 	/** Client thread, every tick. */
@@ -92,6 +102,10 @@ public final class Poller {
 			refetch = true;
 		}
 		wasOnSkyBlock = onSkyBlock;
+		if (LiveLink.open()) {
+			live();
+			return;
+		}
 		if (!onSkyBlock || fetching || !RelayClient.ready() || (!refetch && ticks < dueAt)) {
 			return;
 		}
@@ -107,9 +121,10 @@ public final class Poller {
 		fetching = true;
 		RelayClient.fetch(names, etag).whenComplete((fetched, error) -> client.execute(() -> {
 			fetching = false;
-			if (error != null || fetched.isEmpty() || !names.equals(names(friends))) {
+			if (error != null || fetched.isEmpty() || !names.equals(names(friends)) || LiveLink.open()) {
 				// A failure keeps the old looks; RelayClient logged it. A list that changed during
-				// the fetch was already marked for a new one.
+				// the fetch was already marked for a new one. A link that opened during the fetch
+				// sends newer looks.
 				return;
 			}
 			Players players = players(fetched.get().body());
@@ -122,6 +137,73 @@ public final class Poller {
 			}
 			lastMissing = players.missing();
 		}));
+	}
+
+	/** Sends the friend list on a new link or a list change, then applies what the relay sent. */
+	private static void live() {
+		if (refetch || watchedGeneration != LiveLink.generation()) {
+			refetch = false;
+			watchedGeneration = LiveLink.generation();
+			JsonObject watch = new JsonObject();
+			watch.addProperty("type", "watch");
+			JsonArray names = new JsonArray();
+			names(friends).forEach(names::add);
+			watch.add("names", names);
+			LiveLink.send(watch.toString());
+		}
+		for (String message = LiveLink.next(); message != null; message = LiveLink.next()) {
+			received(message);
+		}
+	}
+
+	/**
+	 * Applies one message from the live link (relay/worker.js, {@code Hub}): {@code friends} holds
+	 * every friend and replaces the looks; {@code changed} holds the friends who just shared.
+	 * Anything else is logged and ignored.
+	 */
+	static void received(String text) {
+		JsonObject message;
+		try {
+			message = JsonParser.parseString(text).getAsJsonObject();
+		} catch (RuntimeException notAnObject) {
+			CherryPicking.LOGGER.warn("Friend looks: the live link sent something that is not a JSON object; ignored.");
+			return;
+		}
+		String type = message.get("type") instanceof JsonPrimitive value && value.isString() ? value.getAsString() : "";
+		// The looks no longer match the last fetch, so the next fetch, if the link drops, gets all.
+		etag = null;
+		switch (type) {
+			case "friends" -> {
+				Players players = players(message);
+				FriendLooks.replace(players.looks());
+				CherryPicking.LOGGER.info("Relay: got looks for {} of {} friends.", players.looks().size(),
+						players.looks().size() + players.missing().size());
+				if (!players.missing().equals(lastMissing) && !players.missing().isEmpty()) {
+					CherryPicking.LOGGER.info("Relay: {} did not share looks yet.", players.missing());
+				}
+				lastMissing = players.missing();
+			}
+			case "changed" -> {
+				Players players = players(message);
+				FriendLooks.update(players.looks());
+				CherryPicking.LOGGER.info("Relay: new looks from {}.", names(message));
+			}
+			default -> CherryPicking.LOGGER.warn("Friend looks: the live link sent a message of unknown type \"{}\"; ignored.",
+					type);
+		}
+	}
+
+	/** The names in a relay message, for the log. */
+	private static List<String> names(JsonObject message) {
+		List<String> names = new ArrayList<>();
+		if (message.get("players") instanceof JsonArray entries) {
+			for (JsonElement entry : entries) {
+				if (entry instanceof JsonObject player && player.get("name") instanceof JsonPrimitive name) {
+					names.add(name.getAsString());
+				}
+			}
+		}
+		return names;
 	}
 
 	/** The friend list as names the relay accepts: no blanks, no repeats, at most ten. */

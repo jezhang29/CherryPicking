@@ -17,6 +17,8 @@ public final class Cosmetics {
 
 	public static void register() {
 		ClientTickEvents.END_CLIENT_TICK.register(Publisher::tick);
+		// The link first, so the poller sees it closed in the same tick the feature turns off.
+		ClientTickEvents.END_CLIENT_TICK.register(LiveLink::tick);
 		ClientTickEvents.END_CLIENT_TICK.register(Poller::tick);
 	}
 

@@ -6,6 +6,8 @@ import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.WebSocket;
+import java.net.http.WebSocketHandshakeException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.Signature;
@@ -37,7 +39,8 @@ import net.minecraft.world.entity.player.ProfilePublicKey;
  *
  * <p><b>Failures</b> are logged once, not once per try; the log says again when the relay works.
  * After a network failure the next try waits a minute, after a key failure ten minutes. If the
- * relay does not allow this player, it stops until {@link #forget}.
+ * relay does not allow this player, it stops until {@link #forget}. A failure of the live link
+ * waits in {@link LiveLink} only.
  *
  * <p>Requests run on the HTTP client's threads, never on the client thread.
  */
@@ -126,6 +129,68 @@ public final class RelayClient {
 						failed(error);
 					}
 				});
+	}
+
+	/**
+	 * Opens the live link (relay/worker.js, {@code live}) with {@code listener}, logging in first if
+	 * there is no token, and again if the relay refuses the token. A failure of the link itself does
+	 * not pause sharing or fetching: {@link LiveLink} waits on its own. A login failure waits as
+	 * always.
+	 */
+	static CompletableFuture<WebSocket> live(WebSocket.Listener listener) {
+		String current = token;
+		CompletableFuture<String> bearer = current != null ? CompletableFuture.completedFuture(current) : login();
+		return bearer.thenCompose(value -> openLive(value, listener))
+				.exceptionallyCompose(error -> {
+					if (handshakeStatus(error) != 401) {
+						return CompletableFuture.failedFuture(error);
+					}
+					token = null;
+					return login().thenCompose(value -> openLive(value, listener));
+				})
+				.exceptionallyCompose(error -> {
+					int status = handshakeStatus(error);
+					if (status == 0) {
+						return CompletableFuture.failedFuture(error);
+					}
+					return CompletableFuture.failedFuture(new Failure(status == 404
+							? "the relay has no live link; it is older than this mod. Friends' looks are fetched"
+									+ " every poll instead."
+							: "the relay refused the live link: HTTP " + status + ".", 0));
+				})
+				.whenComplete((ignored, error) -> {
+					if (error != null) {
+						failed(error);
+					} else {
+						working();
+					}
+				});
+	}
+
+	private static CompletableFuture<WebSocket> openLive(String bearer, WebSocket.Listener listener) {
+		URI address;
+		try {
+			address = URI.create("wss://" + base().toString().substring("https://".length()) + "live");
+		} catch (IllegalArgumentException badAddress) {
+			return CompletableFuture.failedFuture(new Failure("the relay address \"" + url
+					+ "\" is not an https:// web address.", NETWORK_RETRY_MS));
+		}
+		return HTTP.newWebSocketBuilder()
+				.header("Authorization", "Bearer " + bearer)
+				.connectTimeout(TIMEOUT)
+				.buildAsync(address, listener)
+				.exceptionallyCompose(error -> CompletableFuture.failedFuture(
+						handshakeStatus(error) != 0 ? error
+								: new Failure("cannot open the live link to " + url + " (" + unwrap(error) + ").", 0)));
+	}
+
+	/** The HTTP status of a refused WebSocket handshake; 0 for any other error. */
+	private static int handshakeStatus(Throwable error) {
+		return unwrap(error) instanceof WebSocketHandshakeException refused ? refused.getResponse().statusCode() : 0;
+	}
+
+	private static Throwable unwrap(Throwable error) {
+		return error instanceof CompletionException && error.getCause() != null ? error.getCause() : error;
 	}
 
 	/** Runs {@code request} with a token, logging in first if there is none, and again on a 401. */
@@ -253,7 +318,7 @@ public final class RelayClient {
 	}
 
 	private static void failed(Throwable error) {
-		Throwable cause = error instanceof CompletionException && error.getCause() != null ? error.getCause() : error;
+		Throwable cause = unwrap(error);
 		switch (cause) {
 			case Failure failure -> problem(failure.getMessage(), failure.retryMs);
 			case IOException io -> problem("cannot reach " + url + " (" + io + ").", NETWORK_RETRY_MS);
@@ -268,7 +333,7 @@ public final class RelayClient {
 	private static void problem(String message, long retryMs) {
 		if (retryMs == Long.MAX_VALUE) {
 			refused = true;
-		} else {
+		} else if (retryMs > 0) {
 			waitUntil = System.currentTimeMillis() + retryMs;
 		}
 		if (!message.equals(lastProblem)) {
@@ -288,7 +353,10 @@ public final class RelayClient {
 	private record Reply(int status, String body, String etag) {
 	}
 
-	/** A failure with a known cause and wait. {@code Long.MAX_VALUE} waits until {@link #forget}. */
+	/**
+	 * A failure with a known cause and wait. {@code Long.MAX_VALUE} waits until {@link #forget}; 0
+	 * does not pause other requests.
+	 */
 	private static final class Failure extends RuntimeException {
 		private final long retryMs;
 
