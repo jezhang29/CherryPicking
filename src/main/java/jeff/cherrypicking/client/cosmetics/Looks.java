@@ -22,6 +22,8 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.FileToIdConverter;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Util;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -32,6 +34,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.DyedItemColor;
 import net.minecraft.world.item.component.ResolvableProfile;
+import net.minecraft.world.item.equipment.EquipmentAssets;
+import net.minecraft.world.item.equipment.Equippable;
 import net.minecraft.world.item.equipment.trim.ArmorTrim;
 import net.minecraft.world.item.equipment.trim.TrimMaterial;
 import net.minecraft.world.item.equipment.trim.TrimPattern;
@@ -59,6 +63,9 @@ public final class Looks {
 	private static final Map<Key, Styled> STYLED = new HashMap<>();
 	private static final Map<String, ResolvableProfile> PROFILES = new HashMap<>();
 	private static final Set<Cosmetic.Trim> MISSING_TRIMS = new HashSet<>();
+	private static final Set<Identifier> MISSING_MODELS = new HashSet<>();
+	/** Where the game loads equipment assets from, as {@code EquipmentAssetManager} does. */
+	private static final FileToIdConverter EQUIPMENT_FILES = FileToIdConverter.json("equipment");
 
 	private Looks() {
 	}
@@ -116,7 +123,31 @@ public final class Looks {
 		if (copy.is(Items.PLAYER_HEAD)) {
 			look.helmetTexture().map(Looks::profile).ifPresent(profile -> copy.set(DataComponents.PROFILE, profile));
 		}
+		look.armorModel().ifPresent(model -> armorModel(copy, model));
 		return copy;
+	}
+
+	/**
+	 * Draws {@code copy} with the equipment asset {@code model}, as Skyblocker's armor model does. Only
+	 * armor drawn from an asset has one to replace; a skull helmet has none. A model that this client
+	 * does not have, from a resource pack, is left out and logged once: vanilla would draw nothing.
+	 */
+	private static void armorModel(ItemStack copy, Identifier model) {
+		Equippable equippable = copy.get(DataComponents.EQUIPPABLE);
+		if (equippable == null || equippable.assetId().isEmpty()) {
+			return;
+		}
+		if (Minecraft.getInstance().getResourceManager().getResource(EQUIPMENT_FILES.idToFile(model)).isEmpty()) {
+			if (MISSING_MODELS.add(model)) {
+				CherryPicking.LOGGER.warn("Friend looks: this client has no armor model {}; left out.", model);
+			}
+			return;
+		}
+		copy.set(DataComponents.EQUIPPABLE, new Equippable(equippable.slot(), equippable.equipSound(),
+				Optional.of(ResourceKey.create(EquipmentAssets.ROOT_ID, model)), equippable.cameraOverlay(),
+				equippable.allowedEntities(), equippable.dispensable(), equippable.swappable(),
+				equippable.damageOnHurt(), equippable.equipOnInteract(), equippable.canBeSheared(),
+				equippable.shearingSound()));
 	}
 
 	/** Empty, logged once per trim, if this client's registries lack the material or the pattern. */

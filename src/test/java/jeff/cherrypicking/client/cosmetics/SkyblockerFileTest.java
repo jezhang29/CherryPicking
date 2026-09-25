@@ -26,6 +26,7 @@ class SkyblockerFileTest {
 				  "customArmorTrims": {"%1$s": {"material": "minecraft:netherite", "pattern": "minecraft:tide"}},
 				  "customHelmetTextures": {"%2$s": "dGV4dHVyZQ=="},
 				  "customGlint": {"%1$s": true},
+				  "customArmorModel": {"%1$s": "minecraft:netherite"},
 				  "customAnimatedDyes": {"%1$s": {"keyframes": [], "cycleBack": true, "delay": 0.0, "duration": 10.0}},
 				  "customItemNames": {"%2$s": "Hat"}}}
 				""".formatted(CHEST, HELMET)).getAsJsonObject();
@@ -35,7 +36,7 @@ class SkyblockerFileTest {
 		assertEquals(List.of(CHEST, HELMET), List.copyOf(looks.keySet()));
 		assertEquals(JsonParser.parseString("""
 				{"dye": 16711680, "trim": {"material": "minecraft:netherite", "pattern": "minecraft:tide"},
-				 "glint": true,
+				 "glint": true, "armorModel": "minecraft:netherite",
 				 "animatedDye": {"keyframes": [], "cycleBack": true, "delay": 0.0, "duration": 10.0}}"""),
 				looks.get(CHEST));
 		assertEquals(JsonParser.parseString("{\"helmetTexture\": \"dGV4dHVyZQ==\"}"), looks.get(HELMET));

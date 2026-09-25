@@ -70,7 +70,8 @@ class PayloadTest {
 				{"format": 1,
 				 "looks": {
 				   "%s": {"id": "WISE_WITHER_CHESTPLATE", "dye": 16711680,
-				          "trim": {"material": "minecraft:gold", "pattern": "minecraft:sentry"}, "glint": true},
+				          "trim": {"material": "minecraft:gold", "pattern": "minecraft:sentry"}, "glint": true,
+				          "armorModel": "minecraft:netherite"},
 				   "%s": {"id": "WISE_WITHER_HELMET", "helmetTexture": "%s"}},
 				 "equipped": {"chest": "%s"}}
 				""".formatted(RED_WISE, BLUE_WISE, texture, RED_WISE), "test").orElseThrow();
@@ -81,6 +82,7 @@ class PayloadTest {
 		assertEquals("minecraft:gold", chest.trim().orElseThrow().material().toString());
 		assertEquals("minecraft:sentry", chest.trim().orElseThrow().pattern().toString());
 		assertEquals(Optional.of(true), chest.glint());
+		assertEquals("minecraft:netherite", chest.armorModel().orElseThrow().toString());
 		assertEquals(Optional.of(texture), payload.looks().get(BLUE_WISE).helmetTexture());
 		assertEquals(Map.of(EquipmentSlot.CHEST, RED_WISE), payload.equipped());
 	}
@@ -114,10 +116,11 @@ class PayloadTest {
 				  "dye": "red",
 				  "trim": {"material": "Not An Id!", "pattern": "minecraft:sentry"},
 				  "helmetTexture": "%s",
-				  "glint": "yes"}}}
+				  "glint": "yes",
+				  "armorModel": "Not An Id!"}}}
 				""".formatted(RED_WISE, texture("https://example.com/skin.png")), "test").orElseThrow();
 		assertEquals(new Cosmetic("WISE_WITHER_CHESTPLATE", OptionalInt.empty(), Optional.empty(), Optional.empty(),
-				Optional.empty(), Optional.empty()), payload.looks().get(RED_WISE));
+				Optional.empty(), Optional.empty(), Optional.empty()), payload.looks().get(RED_WISE));
 	}
 
 	@Test
@@ -192,7 +195,7 @@ class PayloadTest {
 				""".formatted(RED_WISE, GREEN_BOOTS, RED_WISE)), JsonParser.parseString(json));
 		Payload payload = Payload.decode(json, "test").orElseThrow();
 		assertEquals(Optional.of(new Cosmetic("WISE_WITHER_CHESTPLATE", OptionalInt.of(0xFF0000), Optional.empty(),
-				Optional.empty(), Optional.empty(), Optional.of(true))),
+				Optional.empty(), Optional.empty(), Optional.of(true), Optional.empty())),
 				payload.look(EquipmentSlot.CHEST, "WISE_WITHER_CHESTPLATE"));
 	}
 
@@ -238,7 +241,7 @@ class PayloadTest {
 
 	private static Cosmetic look(String id, int dye) {
 		return new Cosmetic(id, OptionalInt.of(dye), Optional.empty(), Optional.empty(), Optional.empty(),
-				Optional.empty());
+				Optional.empty(), Optional.empty());
 	}
 
 	/** A texture property as Mojang writes one, pointing at {@code url}. */

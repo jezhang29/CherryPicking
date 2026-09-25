@@ -14,9 +14,11 @@ import net.minecraft.resources.Identifier;
  * @param dye           RGB, without alpha
  * @param animatedDye   drawn in place of {@code dye}, as Skyblocker does
  * @param helmetTexture a base64 texture property whose skin is on textures.minecraft.net
+ * @param armorModel    an equipment asset, such as {@code minecraft:netherite}, drawn in place of the
+ *                      armor's own; whether the client has it is checked when drawing
  */
 record Cosmetic(String id, OptionalInt dye, Optional<AnimatedDye> animatedDye, Optional<Trim> trim,
-		Optional<String> helmetTexture, Optional<Boolean> glint) {
+		Optional<String> helmetTexture, Optional<Boolean> glint, Optional<Identifier> armorModel) {
 	/** Names in the trim registries. Whether the client has them is checked when drawing. */
 	record Trim(Identifier material, Identifier pattern) {
 	}
