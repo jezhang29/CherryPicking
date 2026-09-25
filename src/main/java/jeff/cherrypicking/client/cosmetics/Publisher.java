@@ -21,7 +21,8 @@ import net.minecraft.util.Util;
  * when it changes (docs/friend-cosmetics-plan.md, sections 7.3 and 7.4).
  *
  * <ul>
- *   <li>Every 5 s, on an IO thread: has the file changed? If so, it is read again.</li>
+ *   <li>Every 5 s, on an IO thread: has the file changed? If so, it is read again. The first
+ *       read also loads the saved {@link SeenIds}; after that, new ids are saved.</li>
  *   <li>Every second: {@link SeenIds} scans your items, and the payload is built again.</li>
  *   <li>A changed payload is sent after a wait, 10 s after a file change and 2 s after anything
  *       else, so a burst of changes is one send.</li>
@@ -51,6 +52,10 @@ public final class Publisher {
 	/** The last payload the relay stored. */
 	private static String sent;
 	private static boolean sending;
+	/** The saved ids are loaded; until then, saving would overwrite them with fewer. */
+	private static boolean seenLoaded;
+	private static int seenSaved;
+	private static boolean seenSaving;
 
 	private Publisher() {
 	}
@@ -70,6 +75,7 @@ public final class Publisher {
 		pending = null;
 		sent = null;
 		SeenIds.clear();
+		seenLoaded = false;
 	}
 
 	/** Client thread, every tick. */
@@ -81,6 +87,9 @@ public final class Publisher {
 		}
 		if (ticks % FILE_TICKS == 0 && !reading) {
 			checkFile(client);
+		}
+		if (ticks % FILE_TICKS == 0 && seenLoaded && !seenSaving && SeenIds.changes() != seenSaved) {
+			saveSeen(client);
 		}
 		if (ticks % SCAN_TICKS == 0) {
 			SeenIds.scan(player);
@@ -109,12 +118,18 @@ public final class Publisher {
 	private static void checkFile(Minecraft client) {
 		reading = true;
 		Path file = SkyblockerFile.path();
-		CompletableFuture.supplyAsync(() -> modified(file) == fileTime ? null : readFile(file), Util.ioPool())
+		boolean loadSeen = !seenLoaded;
+		CompletableFuture.supplyAsync(() -> modified(file) == fileTime && !loadSeen ? null : readFile(file, loadSeen),
+						Util.ioPool())
 				.whenComplete((read, error) -> client.execute(() -> {
 					reading = false;
 					if (error != null) {
 						CherryPicking.LOGGER.warn("Friend looks: could not check {}.", file, error);
 					} else if (read != null) {
+						if (loadSeen && !seenLoaded) {
+							SeenIds.addSaved(read.seen());
+							seenLoaded = true;
+						}
 						fileTime = read.modified();
 						looks = read.looks().orElse(null);
 						if (client.player != null) {
@@ -124,12 +139,27 @@ public final class Publisher {
 				}));
 	}
 
-	private record Read(long modified, Optional<Map<String, JsonObject>> looks) {
+	/** The Skyblocker file's time and looks, and the saved ids when {@code loadSeen}; else none. */
+	private record Read(long modified, Optional<Map<String, JsonObject>> looks, Map<String, String> seen) {
 	}
 
-	private static Read readFile(Path file) {
+	private static Read readFile(Path file, boolean loadSeen) {
 		long modified = modified(file);
-		return new Read(modified, SkyblockerFile.read(file).map(SkyblockerFile::looks));
+		return new Read(modified, SkyblockerFile.read(file).map(SkyblockerFile::looks),
+				loadSeen ? SeenIds.read(SeenIds.path()) : Map.of());
+	}
+
+	private static void saveSeen(Minecraft client) {
+		seenSaving = true;
+		int changes = SeenIds.changes();
+		Map<String, String> snapshot = Map.copyOf(SeenIds.all());
+		CompletableFuture.runAsync(() -> SeenIds.write(SeenIds.path(), snapshot), Util.ioPool())
+				.whenComplete((ignored, error) -> client.execute(() -> {
+					seenSaving = false;
+					if (error == null) {
+						seenSaved = changes;
+					}
+				}));
 	}
 
 	/** The file's modified time, or {@code -1} if it is missing. */

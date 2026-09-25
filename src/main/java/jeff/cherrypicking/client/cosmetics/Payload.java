@@ -42,8 +42,9 @@ record Payload(Map<String, Cosmetic> looks, Map<EquipmentSlot, String> equipped)
 	static final int MAX_LOOKS = 500;
 	static final int MAX_KEYFRAMES = 32;
 
-	private static final Pattern ITEM_UUID = Pattern.compile("[0-9a-f-]{36}");
-	private static final Pattern SKYBLOCK_ID = Pattern.compile("[A-Z0-9_:;-]{1,64}");
+	/** The item uuids and SkyBlock ids a payload accepts; {@link SeenIds} reads its file with them too. */
+	static final Pattern ITEM_UUID = Pattern.compile("[0-9a-f-]{36}");
+	static final Pattern SKYBLOCK_ID = Pattern.compile("[A-Z0-9_:;-]{1,64}");
 	private static final List<EquipmentSlot> ARMOR =
 			List.of(EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET);
 
