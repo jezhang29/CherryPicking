@@ -25,8 +25,7 @@ import net.minecraft.world.level.block.state.BlockState;
 /**
  * Finds the real Livid in the Floor 5 boss.
  *
- * <p>Written from the game facts in {@code docs/dungeon-layer.md} §3.8, not
- * from Devonian's code, which is GPL-3.0.
+ * <p>Written from the game facts in {@code docs/dungeon-layer.md} §3.8.
  *
  * <p><b>The wool names the real one.</b> When the fight starts, a wool block in
  * the arena ceiling turns the real Livid's color. The Livids are player
