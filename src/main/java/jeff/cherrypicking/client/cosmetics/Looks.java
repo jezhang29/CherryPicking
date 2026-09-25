@@ -116,8 +116,17 @@ public final class Looks {
 		// Skyblocker draws a plain helmet skin before an animated one.
 		if (copy.is(Items.PLAYER_HEAD) && look.helmetTexture().isEmpty()) {
 			look.animatedHelmet().flatMap(id -> AnimatedHeads.texture(id, now)).map(Looks::profile)
-					.ifPresent(profile -> copy.set(DataComponents.PROFILE, profile));
+					.filter(Looks::skinLoaded).ifPresent(profile -> copy.set(DataComponents.PROFILE, profile));
 		}
+	}
+
+	/**
+	 * True once the game has the skin of {@code profile}, and starts the download if not. Until then
+	 * the head layer draws a default skin, so an animated head keeps its last loaded frame instead of
+	 * flickering through Steve and Alex while its frames download.
+	 */
+	private static boolean skinLoaded(ResolvableProfile profile) {
+		return Minecraft.getInstance().playerSkinRenderCache().lookup(profile).getNow(Optional.empty()).isPresent();
 	}
 
 	private static ItemStack apply(Cosmetic look, ItemStack stack) {
