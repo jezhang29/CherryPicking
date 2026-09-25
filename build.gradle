@@ -94,37 +94,41 @@ publishing {
 }
 
 /**
- * Copies the built mod jar into the real Minecraft mods folder, because that folder is how this
- * mod is tested - a dev client has no Hypixel to connect to. `build` finalizes with it, so a fresh
- * jar is in place without a second command.
+ * Copies the built mod jar into the real Minecraft mods folder and the Prism Launcher test
+ * instance, because those folders are how this mod is tested - a dev client has no Hypixel to
+ * connect to. `build` finalizes with it, so a fresh jar is in place without a second command.
  *
- * <p>It is a no-op when the mods folder does not exist, which is what keeps it off CI and off any
+ * <p>A mods folder that does not exist is skipped, which is what keeps it off CI and off any
  * machine that is not the user's Mac. The destination name carries the version, so a version bump
- * leaves the old jar in the folder beside the new one until it is deleted by hand.
+ * leaves the old jar in each folder beside the new one until it is deleted by hand.
  */
-tasks.register("installMod", Copy) {
-	description = "Copies the built mod jar into the Minecraft mods folder"
+tasks.register("installMod") {
+	description = "Copies the built mod jar into the Minecraft and Prism Launcher mods folders"
 	group = "build"
 
-	def modsDir = file("${System.getProperty('user.home')}/Library/Application Support/minecraft/mods")
-
-	onlyIf {
-		def present = modsDir.isDirectory()
-		if (!present) {
-			logger.lifecycle("installMod: no mods folder at ${modsDir}, skipping")
-		}
-		present
-	}
+	def home = System.getProperty('user.home')
+	def modsDirs = [
+		file("${home}/Library/Application Support/minecraft/mods"),
+		file("${home}/Library/Application Support/PrismLauncher/instances/skybllock test/minecraft/mods"),
+	]
+	def jarTask = tasks.named("jar")
+	def jarName = "${project.name}-${project.version}.jar"
 
 	// A jar whose tests fail never reaches the game, however the task is started.
 	dependsOn(tasks.named("check"))
-
-	from(tasks.named("jar"))
-	into(modsDir)
-	rename { "${project.name}-${project.version}.jar" }
+	dependsOn(jarTask)
 
 	doLast {
-		logger.lifecycle("installMod: installed ${project.name}-${project.version}.jar into ${modsDir}")
+		def builtJar = jarTask.get().archiveFile.get().asFile
+		modsDirs.each { modsDir ->
+			if (!modsDir.isDirectory()) {
+				logger.lifecycle("installMod: no mods folder at ${modsDir}, skipping")
+				return
+			}
+			java.nio.file.Files.copy(builtJar.toPath(), new File(modsDir, jarName).toPath(),
+					java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+			logger.lifecycle("installMod: installed ${jarName} into ${modsDir}")
+		}
 	}
 }
 
