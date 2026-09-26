@@ -32,6 +32,12 @@ dependencies {
 
 test {
 	useJUnitPlatform()
+
+	// Minecraft's log4j config on the test classpath writes logs/latest.log in the working
+	// directory; keep it under build/ instead of the project root.
+	def runDir = layout.buildDirectory.dir("test-run").get().asFile
+	workingDir = runDir
+	doFirst { runDir.mkdirs() }
 }
 
 processResources {
