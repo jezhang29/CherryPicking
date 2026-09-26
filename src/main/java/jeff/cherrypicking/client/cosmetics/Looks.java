@@ -164,18 +164,11 @@ public final class Looks {
 		}
 		// Skyblocker draws a plain helmet skin before an animated one.
 		if (heads && copy.is(Items.PLAYER_HEAD) && look.helmetTexture().isEmpty()) {
+			// A frame not loaded yet is skipped, so the copy keeps its last loaded frame instead of
+			// flickering through Steve and Alex.
 			look.animatedHelmet().flatMap(id -> AnimatedHeads.texture(id, now)).map(Looks::profile)
-					.filter(Looks::skinLoaded).ifPresent(profile -> copy.set(DataComponents.PROFILE, profile));
+					.filter(AnimatedHeads::skinLoaded).ifPresent(profile -> copy.set(DataComponents.PROFILE, profile));
 		}
-	}
-
-	/**
-	 * True once the game has the skin of {@code profile}, and starts the download if not. Until then
-	 * the head layer draws a default skin, so an animated head keeps its last loaded frame instead of
-	 * flickering through Steve and Alex while its frames download.
-	 */
-	private static boolean skinLoaded(ResolvableProfile profile) {
-		return Minecraft.getInstance().playerSkinRenderCache().lookup(profile).getNow(Optional.empty()).isPresent();
 	}
 
 	private static ItemStack apply(Cosmetic look, ItemStack stack) {
@@ -244,7 +237,7 @@ public final class Looks {
 	 * Skyblocker's {@code CustomHelmetTextures.getProfile} (LGPL-3.0). Cached, because a new profile
 	 * object makes the skin load again.
 	 */
-	private static ResolvableProfile profile(String texture) {
+	static ResolvableProfile profile(String texture) {
 		return PROFILES.computeIfAbsent(texture, value -> ResolvableProfile.createResolved(new GameProfile(
 				UUID.nameUUIDFromBytes(value.getBytes(StandardCharsets.UTF_8)), "custom",
 				new PropertyMap(ImmutableMultimap.of("textures", new Property("textures", value))))));

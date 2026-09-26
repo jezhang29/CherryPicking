@@ -23,17 +23,25 @@ import com.google.gson.JsonPrimitive;
 import jeff.cherrypicking.CherryPicking;
 
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.Minecraft;
 import net.minecraft.util.Util;
+import net.minecraft.world.item.component.ResolvableProfile;
 
 /**
  * The frames of Skyblocker's animated helmets. A shared look names an animated head only by its id;
  * the frames come from the list Skyblocker downloads with the NEU repo, so each client reads its own
  * copy and the payload stays small. Without Skyblocker's list, animated helmets are left out.
  *
- * <p>The list is read once, on an IO thread, the first time a friend wears an animated helmet. Its
- * frames are checked there like a friend's helmet skin: only Mojang skins are kept.
+ * <p>The list is read once, on an IO thread, the first time an animated helmet is drawn. Its frames
+ * are checked there like a friend's helmet skin: only Mojang skins are kept.
+ *
+ * <p>The game keeps skin images on disk, but loads each one into memory only when it is first drawn,
+ * and draws a default skin until then. So the first time a head is drawn in a session, all its frames
+ * are loaded at once ({@link #preload}), and a frame that is not loaded yet is not shown: the head
+ * keeps its last loaded frame. That holds for friends' heads ({@code Looks}) and for your own, which
+ * Skyblocker draws ({@link #steady}).
  */
-final class AnimatedHeads {
+public final class AnimatedHeads {
 	/**
 	 * One animated head: its frames as texture properties, and the game ticks each frame shows for.
 	 * Ported from Skyblocker's {@code CustomAnimatedHelmetTextures} (LGPL-3.0).
@@ -46,6 +54,9 @@ final class AnimatedHeads {
 	/** Render thread only, like {@link #texture}. */
 	private static boolean loading;
 	private static final Set<String> MISSING = new HashSet<>();
+	private static final Set<String> PRELOADED = new HashSet<>();
+	/** The last frame of each of Skyblocker's animated heads that was loaded when drawn. */
+	private static final Map<String, ResolvableProfile> SHOWN = new HashMap<>();
 
 	private AnimatedHeads() {
 	}
@@ -67,7 +78,47 @@ final class AnimatedHeads {
 			}
 			return Optional.empty();
 		}
+		preload(id, head);
 		return Optional.of(frame(head, millis));
+	}
+
+	/**
+	 * The frame to draw for Skyblocker's animated head {@code id}, when Skyblocker picked
+	 * {@code frame}: that frame once its skin is loaded, else the last one that was. Null, which makes
+	 * Skyblocker draw the plain helmet, until the first frame loads. Called by
+	 * {@code SkyblockerAnimatedFrameMixin}, on the thread Skyblocker's own code runs on.
+	 */
+	public static ResolvableProfile steady(String id, ResolvableProfile frame) {
+		if (frame == null) {
+			return null;
+		}
+		Map<String, Head> loaded = heads;
+		if (loaded == null) {
+			load();
+		} else if (loaded.get(id) instanceof Head head) {
+			preload(id, head);
+		}
+		if (skinLoaded(frame)) {
+			SHOWN.put(id, frame);
+			return frame;
+		}
+		return SHOWN.get(id);
+	}
+
+	/**
+	 * True once the game has the skin of {@code profile} in memory, and starts loading it if not. Until
+	 * then the head layer draws a default skin.
+	 */
+	static boolean skinLoaded(ResolvableProfile profile) {
+		return Minecraft.getInstance().playerSkinRenderCache().lookup(profile).getNow(Optional.empty()).isPresent();
+	}
+
+	/** Starts loading every frame of {@code head}, once per session. */
+	private static void preload(String id, Head head) {
+		if (PRELOADED.add(id)) {
+			CherryPicking.LOGGER.info("Animated helmets: loading the {} frames of {}.", head.textures().size(), id);
+			head.textures().forEach(texture -> skinLoaded(Looks.profile(texture)));
+		}
 	}
 
 	/** The frame shown at {@code millis}: each lasts {@code ticks} game ticks of 50 ms, then the next. */
