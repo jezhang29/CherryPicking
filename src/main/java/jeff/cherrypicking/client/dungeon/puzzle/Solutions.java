@@ -96,23 +96,6 @@ public final class Solutions {
 		return values;
 	}
 
-	/** As {@link #ints}, for a file of fractional seconds. */
-	static double[] reals(JsonElement element) {
-		if (!element.isJsonArray()) {
-			return null;
-		}
-		JsonArray array = element.getAsJsonArray();
-		double[] values = new double[array.size()];
-		for (int i = 0; i < values.length; i++) {
-			try {
-				values[i] = array.get(i).getAsDouble();
-			} catch (RuntimeException notANumber) {
-				return null;
-			}
-		}
-		return values;
-	}
-
 	/**
 	 * One bundled file, read on the first call and kept.
 	 *

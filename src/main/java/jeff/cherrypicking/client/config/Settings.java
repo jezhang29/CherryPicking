@@ -2,7 +2,6 @@ package jeff.cherrypicking.client.config;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -318,15 +317,6 @@ public final class Settings {
 	private static <T> Runnable keep(Setting<T> setting) {
 		T kept = setting.value();
 		return () -> setting.value(kept);
-	}
-
-	/**
-	 * {@code BOTTOM_RIGHT} reads as "Bottom right". Here for the next {@code choice} over an enum
-	 * that has no {@code label()} of its own; every current one has.
-	 */
-	private static String pretty(Enum<?> value) {
-		String words = value.name().toLowerCase(Locale.ROOT).replace('_', ' ');
-		return Character.toUpperCase(words.charAt(0)) + words.substring(1);
 	}
 
 	/**
