@@ -86,6 +86,7 @@ public final class StarMobRenderer {
 		PoseStack poseStack = context.poseStack();
 		float partialTick = client.getDeltaTracker().getGameTimeDeltaPartialTick(false);
 		boolean labels = StarMobWatch.labels();
+		int hideLabelsWithin = StarMobWatch.hideLabelsWithin();
 
 		poseStack.pushPose();
 		// The level pose is identity at the camera; bring world coordinates back to it.
@@ -125,12 +126,20 @@ public final class StarMobRenderer {
 			if (labels) {
 				Vec3 top = new Vec3((box.minX + box.maxX) / 2.0, box.maxY + LABEL_LIFT,
 						(box.minZ + box.maxZ) / 2.0);
-				String text = mob.name() + "  " + Math.round(eye.distanceTo(top)) + "m";
-				DrawKit.label(poseStack, collector, camera, top, Component.literal(text), 1.0);
+				double distance = eye.distanceTo(top);
+				if (labelShows(distance, hideLabelsWithin)) {
+					String text = mob.name() + "  " + Math.round(distance) + "m";
+					DrawKit.label(poseStack, collector, camera, top, Component.literal(text), 1.0);
+				}
 			}
 		}
 
 		poseStack.popPose();
+	}
+
+	/** Whether a label {@code distance} blocks away shows; {@code hideWithin} 0 shows every label. */
+	static boolean labelShows(double distance, int hideWithin) {
+		return distance >= hideWithin;
 	}
 
 	private record Drawn(StarMob mob, AABB box, double distanceSqr) {

@@ -81,6 +81,8 @@ public final class StarMobWatch {
 	// render thread. Defaults are here, at the field.
 	private static volatile boolean enabled = true;
 	private static volatile boolean labels = true;
+	/** In blocks. A near mob's own Hypixel nametag names it, and a second label only covers it. */
+	private static volatile int hideLabelsWithin = 8;
 	/** Off: a hidden Fels shows no star, so this may box an unstarred one. */
 	private static volatile boolean hiddenFels = false;
 
@@ -252,6 +254,14 @@ public final class StarMobWatch {
 
 	public static void labels(boolean value) {
 		labels = value;
+	}
+
+	public static int hideLabelsWithin() {
+		return hideLabelsWithin;
+	}
+
+	public static void hideLabelsWithin(int value) {
+		hideLabelsWithin = value;
 	}
 
 	public static boolean hiddenFels() {

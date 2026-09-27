@@ -208,6 +208,12 @@ public final class Settings {
 			flag("mobs.labels", "Name starred mobs", Section.STAR_MOBS,
 					"Shows the name of the mob and its distance above the box.",
 					StarMobWatch::labels, StarMobWatch::labels);
+			when(StarMobWatch::labels, () -> {
+				whole("mobs.hideLabelsWithin", "Hide names within", Section.STAR_MOBS,
+						"Hides the name of a mob when you are nearer to it than this distance. Near a mob, you can see its Hypixel name tag.",
+						new Control.Whole(0, 32, 1, "blocks", "Never"),
+						StarMobWatch::hideLabelsWithin, StarMobWatch::hideLabelsWithin);
+			});
 			flag("mobs.hiddenFels", "Box hidden Fels", Section.STAR_MOBS,
 					"Puts a box around each hidden Fels before it comes out. A hidden Fels does not show a star, so this setting finds it early.",
 					StarMobWatch::hiddenFels, StarMobWatch::hiddenFels);
