@@ -2,6 +2,18 @@ plugins {
 	id 'net.fabricmc.fabric-loom' version "${loom_version}"
 }
 
+// The patch number is the commit count (buildSrc ModVersion), so each update installs a higher
+// version than the one before it. Without git, the build warns and uses patch 0.
+def commitCount = providers.exec {
+	commandLine 'git', 'rev-list', '--count', 'HEAD'
+	ignoreExitValue = true
+}
+version = ModVersion.of(project.mod_version, commitCount.result.get().exitValue == 0 ? commitCount.standardOutput.asText.get() : null)
+	.orElseGet {
+		logger.warn("No git commit count; the version is ${project.mod_version}.0")
+		"${project.mod_version}.0"
+	}
+
 repositories {
 	// For test-only dependencies. Loom supplies the Minecraft and Fabric repositories itself.
 	mavenCentral()
