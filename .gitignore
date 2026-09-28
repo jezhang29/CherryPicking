@@ -45,3 +45,10 @@ logs/
 # cloudflare
 
 relay/.wrangler/
+
+# AI agent instructions stay local
+
+CLAUDE.md
+AGENTS.md
+.claude/
+.codex/
