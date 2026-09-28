@@ -44,7 +44,8 @@ import net.minecraft.world.item.equipment.trim.TrimPattern;
  *
  * <p>Vanilla reads every armor look from the stack's components. So the look is a copy of the stack
  * with those components set, swapped in when the game builds the friend's render state, and vanilla
- * draws the copy as it is. The world's stack is never changed.
+ * draws the copy as it is. The world's stack is never changed. A helmet that is not a skull but has a
+ * skin is drawn as a player head instead ({@link HelmetSkins}), for friends and for you.
  *
  * <p>Render thread only. The caches are plain maps for that reason.
  */
@@ -54,9 +55,11 @@ public final class Looks {
 
 	/**
 	 * The copy made for {@code source} from {@code payload}, and the look it has. With no look,
-	 * {@code result} is {@code source} itself and {@code look} is empty.
+	 * {@code result} is {@code source} itself and {@code look} is empty. {@code skull} is the player
+	 * head drawn in place of a helmet that is not a skull but has a skin in the look, else
+	 * {@link ItemStack#EMPTY}.
 	 */
-	private record Styled(ItemStack source, Payload payload, ItemStack result, Optional<Cosmetic> look) {
+	private record Styled(ItemStack source, Payload payload, ItemStack result, ItemStack skull, Optional<Cosmetic> look) {
 	}
 
 	private static final Map<Key, Styled> STYLED = new HashMap<>();
@@ -121,10 +124,15 @@ public final class Looks {
 	 * for it. Called several times per living entity per frame, so every other entity leaves at the
 	 * first checks.
 	 *
-	 * <p>Never on your own player: Skyblocker draws your own looks at once, and a relay look would
-	 * show a change only after the next share and fetch.
+	 * <p>Never a relay look on your own player: Skyblocker draws your own looks at once, and a relay
+	 * look would show a change only after the next share and fetch. Your own helmet skin on a helmet
+	 * that is not a skull comes from Skyblocker too, through {@link HelmetSkins#own}.
 	 */
 	public static ItemStack styled(LivingEntity entity, EquipmentSlot slot, ItemStack stack) {
+		ItemStack own = HelmetSkins.own(entity, slot, stack);
+		if (own != stack) {
+			return own;
+		}
 		if (!Cosmetics.enabled() || FriendLooks.isEmpty() || stack.isEmpty() || !(entity instanceof Player)
 				|| entity instanceof LocalPlayer || !DungeonState.inSkyBlock()) {
 			return stack;
@@ -140,11 +148,28 @@ public final class Looks {
 		Styled styled = STYLED.get(key);
 		if (styled == null || styled.source() != stack || styled.payload() != payload) {
 			Optional<Cosmetic> look = payload.look(slot, SkyblockItem.id(SkyblockItem.tag(stack)));
-			styled = new Styled(stack, payload, look.map(found -> apply(found, stack)).orElse(stack), look);
+			styled = look.map(found -> new Styled(stack, payload, apply(found, stack), skull(found, slot, stack), look))
+					.orElseGet(() -> new Styled(stack, payload, stack, ItemStack.EMPTY, look));
 			STYLED.put(key, styled);
 		}
 		animate(styled);
-		return styled.result();
+		// A skull with no skin yet (an animated head still loading, or one not in this client's list)
+		// would draw Steve, so the helmet shows until then.
+		return styled.skull().get(DataComponents.PROFILE) != null ? styled.skull() : styled.result();
+	}
+
+	/**
+	 * The player head to draw in place of a head-slot {@code stack} that is not a skull, when the look
+	 * has a skin; else {@link ItemStack#EMPTY}. The game draws a skin only on a skull item.
+	 */
+	private static ItemStack skull(Cosmetic look, EquipmentSlot slot, ItemStack stack) {
+		if (!heads || slot != EquipmentSlot.HEAD || stack.is(Items.PLAYER_HEAD)
+				|| (look.helmetTexture().isEmpty() && look.animatedHelmet().isEmpty())) {
+			return ItemStack.EMPTY;
+		}
+		ItemStack skull = HelmetSkins.skull(stack);
+		look.helmetTexture().map(Looks::profile).ifPresent(profile -> skull.set(DataComponents.PROFILE, profile));
+		return skull;
 	}
 
 	/**
@@ -163,11 +188,12 @@ public final class Looks {
 					new DyedItemColor(AnimatedDyes.color(dye, now / 1000.0))));
 		}
 		// Skyblocker draws a plain helmet skin before an animated one.
-		if (heads && copy.is(Items.PLAYER_HEAD) && look.helmetTexture().isEmpty()) {
-			// A frame not loaded yet is skipped, so the copy keeps its last loaded frame instead of
+		ItemStack head = styled.skull().isEmpty() ? copy : styled.skull();
+		if (heads && head.is(Items.PLAYER_HEAD) && look.helmetTexture().isEmpty()) {
+			// A frame not loaded yet is skipped, so the head keeps its last loaded frame instead of
 			// flickering through Steve and Alex.
 			look.animatedHelmet().flatMap(id -> AnimatedHeads.texture(id, now)).map(Looks::profile)
-					.filter(AnimatedHeads::skinLoaded).ifPresent(profile -> copy.set(DataComponents.PROFILE, profile));
+					.filter(AnimatedHeads::skinLoaded).ifPresent(profile -> head.set(DataComponents.PROFILE, profile));
 		}
 	}
 

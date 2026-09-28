@@ -14,9 +14,10 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 /**
- * Gives a friend's skull helmet its skin. The head slot's stack sets the render state's
- * {@code wornHeadProfile}, which the skull layer draws. This is the only {@code getItemBySlot} call
- * in that method.
+ * Gives a friend's skull helmet its skin, and draws a helmet with a skin (a friend's or your own) as
+ * a skull. The head slot's stack sets the render state's {@code wornHeadType} and
+ * {@code wornHeadProfile}, which the skull layer draws. This is the only {@code getItemBySlot} call in
+ * that method.
  */
 @Mixin(LivingEntityRenderer.class)
 public abstract class FriendHeadMixin {

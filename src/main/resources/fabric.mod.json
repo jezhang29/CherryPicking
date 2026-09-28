@@ -23,7 +23,8 @@
 		]
 	},
 	"mixins": [
-		"cherrypicking.mixins.json"
+		"cherrypicking.mixins.json",
+		"cherrypicking-skyblocker.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.19.5",

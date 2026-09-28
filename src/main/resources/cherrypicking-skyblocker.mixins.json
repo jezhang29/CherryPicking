@@ -1,0 +1,12 @@
+{
+	"required": false,
+	"package": "jeff.cherrypicking.mixin.skyblocker",
+	"compatibilityLevel": "JAVA_25",
+	"mixins": [],
+	"client": [
+		"SkyblockerHelmetSkinMixin"
+	],
+	"injectors": {
+		"defaultRequire": 0
+	}
+}

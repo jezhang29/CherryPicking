@@ -15,7 +15,8 @@ import org.spongepowered.asm.mixin.injection.At;
 /**
  * Gives a friend's worn armor its look. {@code getEquipmentIfRenderable} fills the armor stacks of
  * the render state, which the armor layer draws from: dye, trim, glint and model. Players reach it
- * through {@code AvatarRenderer}.
+ * through {@code AvatarRenderer}. A helmet drawn as a skull comes back as a player head, which has no
+ * armor asset, so the armor layer does not draw the helmet under the skull.
  */
 @Mixin(HumanoidMobRenderer.class)
 public abstract class FriendArmorMixin {
