@@ -24,7 +24,7 @@ public final class HelmetSkins {
 	 * have a skin. Weak keys: a stack the server replaced drops out. {@code ItemStack} has no
 	 * {@code equals}, so the stack object is the key.
 	 */
-	private static final Map<ItemStack, ItemStack> OWN = new WeakHashMap<>();
+	private static final Map<ItemStack, ItemStack> SKULLS = new WeakHashMap<>();
 
 	private HelmetSkins() {
 	}
@@ -51,27 +51,37 @@ public final class HelmetSkins {
 	}
 
 	/**
-	 * A player head with {@code helmet}'s custom data and no skin. The custom data keeps the SkyBlock
-	 * id and uuid, so Skyblocker and {@code /cherry debug armor} see the same item. A skull drawn on
-	 * the head has no glint, so the glint is not copied.
+	 * A player head with {@code helmet}'s custom data and glint, and no skin. The custom data keeps the
+	 * SkyBlock id and uuid, so Skyblocker (skin, glint, item model) and {@code /cherry debug armor} see
+	 * the same item. The glint shows on the icon.
 	 */
 	static ItemStack skull(ItemStack helmet) {
 		ItemStack skull = new ItemStack(Items.PLAYER_HEAD);
 		skull.copyFrom(DataComponents.CUSTOM_DATA, helmet);
+		skull.copyFrom(DataComponents.ENCHANTMENTS, helmet);
+		skull.copyFrom(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, helmet);
 		return skull;
 	}
 
 	/**
-	 * The stack to draw on your own head: a player head when Skyblocker has a skin for the helmet,
-	 * otherwise {@code stack}. Also covers the preview player in Skyblocker's customize screen, so a
-	 * skin shows there the moment it is picked. Other players' helmets have no uuid, so they never
-	 * match.
+	 * The stack to draw on your own head: {@link #drawn} of the helmet. Also covers the preview player
+	 * in Skyblocker's customize screen, so a skin shows there the moment it is picked. Other players'
+	 * helmets have no uuid, so they never match.
 	 */
 	static ItemStack own(LivingEntity entity, EquipmentSlot slot, ItemStack stack) {
-		if (slot != EquipmentSlot.HEAD || !(entity instanceof Player) || stack.isEmpty() || stack.is(Items.PLAYER_HEAD)) {
+		return slot == EquipmentSlot.HEAD && entity instanceof Player ? drawn(stack) : stack;
+	}
+
+	/**
+	 * A player head when Skyblocker has a skin for your helmet {@code stack}, otherwise {@code stack}.
+	 * For the helmet on your head and for its icon, in the inventory, the hotbar and your hand. Called
+	 * for every item drawn, so a stack seen before costs one map lookup.
+	 */
+	public static ItemStack drawn(ItemStack stack) {
+		if (stack.isEmpty() || stack.is(Items.PLAYER_HEAD)) {
 			return stack;
 		}
-		ItemStack skull = OWN.computeIfAbsent(stack, helmet -> canHaveSkin(helmet) ? skull(helmet) : ItemStack.EMPTY);
+		ItemStack skull = SKULLS.computeIfAbsent(stack, helmet -> canHaveSkin(helmet) ? skull(helmet) : ItemStack.EMPTY);
 		// Asked each frame: Skyblocker's skin changes the moment a head is picked, and an animated
 		// head changes its frame. Without a skin, the game would draw Steve.
 		return skull.get(DataComponents.PROFILE) != null ? skull : stack;

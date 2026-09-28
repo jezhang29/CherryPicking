@@ -74,9 +74,7 @@ public abstract class SkyblockerHelmetSkinMixin {
 			cherrypicking$modeButton = column.addChild(Button.builder(Component.empty(), button -> {
 				cherrypicking$skin = !cherrypicking$skin;
 				updateWidgets();
-			}).width(slots.getWidth()).tooltip(Tooltip.create(Component.literal(
-					"Change between the helmet's head skin and its dye and trim. "
-							+ "A skin replaces the helmet. The dye and trim stay saved.")))
+			}).width(slots.getWidth()).tooltip(Tooltip.create(Component.literal("Switch between skin and dye.")))
 					.build());
 		}
 		return added;

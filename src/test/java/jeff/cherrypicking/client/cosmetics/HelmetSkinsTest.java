@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -95,5 +96,18 @@ class HelmetSkinsTest {
 		assertEquals("TARANTULA_HELMET", SkyblockItem.id(SkyblockItem.tag(skull)));
 		assertEquals(UUID, SkyblockItem.uuid(SkyblockItem.tag(skull)));
 		assertNull(skull.get(DataComponents.PROFILE));
+	}
+
+	@Test
+	void theSkullKeepsTheHelmetsGlint() {
+		ItemStack helmet = item(Items.LEATHER_HELMET, "TARANTULA_HELMET", UUID);
+		helmet.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+		assertEquals(Boolean.TRUE, HelmetSkins.skull(helmet).get(DataComponents.ENCHANTMENT_GLINT_OVERRIDE));
+	}
+
+	@Test
+	void anotherPlayersHelmetIsDrawnAsItself() {
+		ItemStack helmet = item(Items.LEATHER_HELMET, "TARANTULA_HELMET", "");
+		assertSame(helmet, HelmetSkins.drawn(helmet));
 	}
 }

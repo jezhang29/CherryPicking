@@ -6,6 +6,7 @@
 	"client": [
 		"FriendArmorMixin",
 		"FriendHeadMixin",
+		"HelmetSkinIconMixin",
 		"SkyblockerAnimatedFrameMixin",
 		"SkyblockerAnimatedHeadMixin",
 		"ShutdownWatchdogMixin"
